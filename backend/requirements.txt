@@ -1,0 +1,7 @@
+Flask
+Flask-CORS
+python-dotenv
+requests
+beautifulsoup4
+lxml
+feedparser
