@@ -75,22 +75,20 @@ jobs:
             # 创建日志目录
             mkdir -p logs
             
-            # 停止旧的后端服务
-            echo "停止旧的后端服务..."
-            if pgrep -f "python.*run.py" > /dev/null; then
-              pkill -f "python.*run.py"
-              echo "已停止旧的后端进程"
-              sleep 2
-            else
-              echo "没有运行中的后端进程"
-            fi
+            # 重启后端服务
+            echo "重启后端服务..."
+            sudo systemctl restart autotopicsum-backend.service
+            sleep 2
             
-            # 启动后端服务
-            echo "启动后端服务..."
-            nohup python run.py > logs/backend.log 2>&1 &
-            BACKEND_PID=$!
-            echo "✓ 后端服务已启动（PID: $BACKEND_PID）"
-            echo "后端运行在: http://localhost:5001"
+            # 检查服务状态
+            if sudo systemctl is-active --quiet autotopicsum-backend.service; then
+              echo "✓ 后端服务运行正常"
+              sudo systemctl status autotopicsum-backend.service --no-pager
+            else
+              echo "✗ 后端服务启动失败"
+              sudo systemctl status autotopicsum-backend.service --no-pager
+              exit 1
+            fi
       
       - name: Deploy Frontend to Server
         uses: appleboy/scp-action@master
