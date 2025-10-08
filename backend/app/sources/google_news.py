@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 class GoogleNewsSource(BaseNewsSource):
     """Google News RSS数据源"""
     
+    # 固定返回数量
+    DEFAULT_LIMIT = 100
+    
     def __init__(self):
         super().__init__("Google News")
         self.base_url = "https://news.google.com/rss"
@@ -31,14 +34,13 @@ class GoogleNewsSource(BaseNewsSource):
             **kwargs: 
                 - language: 语言代码，如'zh-CN'
                 - region: 地区代码，如'CN'
-                - limit: 返回数量限制
                 
         Returns:
-            新闻文章列表
+            新闻文章列表（固定返回100条，如果可用）
         """
         language = kwargs.get('language', 'zh-CN')
         region = kwargs.get('region', 'CN')
-        limit = kwargs.get('limit', 20)
+        limit = self.DEFAULT_LIMIT  # 固定100条
         
         try:
             # 构建RSS URL

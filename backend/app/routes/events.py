@@ -4,17 +4,17 @@ from app.routes import api_bp
 from app.services.event_service import event_service
 
 
-@api_bp.route('/events/search', methods=['GET'])
+@api_bp.route('/events/search', methods=['POST'])
 def search_events():
     """
-    搜索事件接口
-    参数：
+    提交搜索任务接口（异步）
+    Body参数：
         - query: 搜索关键词（必需）
         - language: 语言代码，默认'zh-CN'
         - region: 地区代码，默认'CN'
-        - limit: 每个数据源的返回数量限制，默认20
     """
-    query = request.args.get('query', '')
+    data = request.get_json() or {}
+    query = data.get('query', '')
     
     if not query:
         return jsonify({
@@ -23,22 +23,17 @@ def search_events():
             'message': '搜索关键词不能为空'
         }), 400
     
-    language = request.args.get('language', 'zh-CN')
-    region = request.args.get('region', 'CN')
-    limit = request.args.get('limit', 20, type=int)
+    language = data.get('language', 'zh-CN')
+    region = data.get('region', 'CN')
     
-    # 调用事件服务进行搜索和聚合
-    result = event_service.search_and_aggregate(
+    # 提交搜索任务到队列
+    result = event_service.submit_search_task(
         query=query,
         language=language,
-        region=region,
-        limit=limit
+        region=region
     )
     
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 500
+    return jsonify(result)
 
 
 @api_bp.route('/events', methods=['GET'])
@@ -92,6 +87,36 @@ def get_event_detail(event_id):
         return jsonify({
             'success': True,
             'data': event,
+            'message': '获取成功'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'data': None,
+            'message': f'获取失败: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/tasks/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    """
+    获取任务状态接口
+    参数：
+        - task_id: 任务ID
+    """
+    try:
+        task_status = event_service.get_task_status(task_id)
+        
+        if not task_status:
+            return jsonify({
+                'success': False,
+                'data': None,
+                'message': '任务不存在'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'data': task_status,
             'message': '获取成功'
         })
     except Exception as e:

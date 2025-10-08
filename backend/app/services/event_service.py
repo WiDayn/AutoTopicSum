@@ -4,8 +4,10 @@ from datetime import datetime
 from collections import defaultdict
 import hashlib
 import logging
+import uuid
 
 from app.core.aggregator import aggregator
+from app.core.task_queue import task_queue, TaskStatus
 from app.sources.google_news import GoogleNewsSource
 
 logger = logging.getLogger(__name__)
@@ -27,64 +29,129 @@ class EventService:
         google_news = GoogleNewsSource()
         aggregator.register_source(google_news)
         logger.info("数据源初始化完成")
+        
+        # 注册任务处理器
+        task_queue.register_handler('search_news', self._handle_search_task)
+        
+        # 启动任务队列
+        task_queue.start()
+        logger.info("任务队列已启动")
     
-    def search_and_aggregate(
+    def submit_search_task(
         self,
         query: str,
         language: str = 'zh-CN',
-        region: str = 'CN',
-        limit: int = 20
+        region: str = 'CN'
     ) -> Dict:
         """
-        搜索并聚合新闻
+        提交搜索任务（异步）
         
         Args:
             query: 搜索关键词
             language: 语言代码
             region: 地区代码
-            limit: 每个数据源的返回数量限制
             
         Returns:
-            聚合后的事件数据
+            任务提交结果
         """
         try:
-            # 从所有数据源搜索
-            results = aggregator.search_all(
-                query,
-                language=language,
-                region=region,
-                limit=limit
+            # 生成任务ID
+            task_id = str(uuid.uuid4())
+            
+            # 提交任务到队列
+            task = task_queue.submit_task(
+                task_id=task_id,
+                task_type='search_news',
+                params={
+                    'query': query,
+                    'language': language,
+                    'region': region
+                }
             )
             
-            # 聚合结果
-            aggregated_articles = aggregator.aggregate_results(results)
-            
-            # 生成事件（简单实现：将所有文章作为一个事件）
-            event = self._create_event_from_articles(
-                query,
-                aggregated_articles
-            )
-            
-            # 缓存事件
-            self.events_cache[event['id']] = event
+            # 创建初始事件（状态为处理中）
+            event_id = self._generate_event_id(query)
+            initial_event = {
+                'id': event_id,
+                'task_id': task_id,
+                'title': f'关于"{query}"的新闻聚合',
+                'summary': '',
+                'content': '',
+                'date': datetime.now().isoformat(),
+                'category': '综合',
+                'source_count': 0,
+                'sources': [],
+                'tags': [],
+                'created_at': datetime.now().isoformat(),
+                'status': 'processing',
+                'progress': task.progress
+            }
+            self.events_cache[event_id] = initial_event
             
             return {
                 'success': True,
                 'data': {
-                    'event': event,
-                    'articles': aggregated_articles,
-                    'source_count': len(results)
+                    'task_id': task_id,
+                    'event_id': event_id,
+                    'status': 'submitted'
                 },
-                'message': f'成功从 {len(results)} 个数据源聚合了 {len(aggregated_articles)} 篇文章'
+                'message': '搜索任务已提交，正在处理中...'
             }
             
         except Exception as e:
-            logger.error(f"搜索聚合失败: {str(e)}")
+            logger.error(f"提交搜索任务失败: {str(e)}")
             return {
                 'success': False,
                 'data': None,
-                'message': f'搜索失败: {str(e)}'
+                'message': f'提交失败: {str(e)}'
             }
+    
+    def _handle_search_task(self, task, update_progress):
+        """
+        处理搜索任务
+        
+        Args:
+            task: 任务对象
+            update_progress: 进度更新函数
+        """
+        params = task.params
+        query = params['query']
+        language = params.get('language', 'zh-CN')
+        region = params.get('region', 'CN')
+        
+        # 获取数据源数量
+        source_count = aggregator.get_source_count()
+        
+        # 从所有数据源搜索
+        update_progress(0, source_count, f'开始从 {source_count} 个数据源搜索...')
+        
+        results = aggregator.search_all(
+            query,
+            language=language,
+            region=region
+        )
+        
+        # 聚合结果
+        update_progress(source_count, source_count, '正在聚合结果...')
+        aggregated_articles = aggregator.aggregate_results(results)
+        
+        # 生成事件
+        event = self._create_event_from_articles(query, aggregated_articles)
+        event['status'] = 'completed'
+        event['progress'] = {
+            'current': source_count,
+            'total': source_count,
+            'message': '完成'
+        }
+        
+        # 更新缓存
+        self.events_cache[event['id']] = event
+        
+        return {
+            'event_id': event['id'],
+            'article_count': len(aggregated_articles),
+            'source_count': len(results)
+        }
     
     def _create_event_from_articles(
         self,
@@ -213,12 +280,47 @@ class EventService:
     
     def get_all_events(self) -> List[Dict]:
         """
-        获取所有缓存的事件
+        获取所有缓存的事件（包括处理中的）
         
         Returns:
             事件列表
         """
-        return list(self.events_cache.values())
+        events = list(self.events_cache.values())
+        
+        # 更新处理中事件的进度
+        for event in events:
+            if event.get('status') == 'processing' and event.get('task_id'):
+                task = task_queue.get_task(event['task_id'])
+                if task:
+                    event['progress'] = task.progress
+                    # 如果任务已完成，更新事件状态
+                    if task.status == TaskStatus.COMPLETED:
+                        if task.result:
+                            # 重新获取完整事件数据
+                            event_id = task.result.get('event_id')
+                            if event_id and event_id in self.events_cache:
+                                events[events.index(event)] = self.events_cache[event_id]
+                    elif task.status == TaskStatus.FAILED:
+                        event['status'] = 'failed'
+                        event['error'] = task.error
+        
+        return events
+    
+    def get_task_status(self, task_id: str) -> Optional[Dict]:
+        """
+        获取任务状态
+        
+        Args:
+            task_id: 任务ID
+            
+        Returns:
+            任务状态信息
+        """
+        task = task_queue.get_task(task_id)
+        if not task:
+            return None
+        
+        return task.to_dict()
 
 
 # 全局服务实例

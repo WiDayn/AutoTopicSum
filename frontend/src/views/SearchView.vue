@@ -109,12 +109,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import SearchBar from '@/components/SearchBar.vue'
 import EventCard from '@/components/EventCard.vue'
 import Button from '@/components/ui/Button.vue'
-import { searchEvents, getEvents } from '@/api/events'
+import { submitSearchTask, getEvents } from '@/api/events'
 
 const router = useRouter()
 
@@ -126,6 +126,7 @@ const totalPages = ref(1)
 const perPage = ref(10)
 const searchQuery = ref('')
 const hasSearched = ref(false)  // 记录是否已经搜索过
+const pollingInterval = ref(null)  // 轮询定时器
 
 // 搜索事件
 const handleSearch = async (query) => {
@@ -137,7 +138,37 @@ const handleSearch = async (query) => {
   }
   currentPage.value = 1
   hasSearched.value = true
-  await fetchEvents()
+  
+  // 提交搜索任务
+  if (searchQuery.value) {
+    await submitSearch(searchQuery.value)
+  } else {
+    await fetchEvents()
+  }
+}
+
+// 提交搜索任务
+const submitSearch = async (query) => {
+  loading.value = true
+  try {
+    const response = await submitSearchTask({
+      query: query,
+      language: 'zh-CN',
+      region: 'CN'
+    })
+    
+    if (response.success) {
+      console.log('任务已提交:', response.data)
+      // 立即获取事件列表（包含新提交的处理中的事件）
+      await fetchEvents()
+      // 开始轮询更新
+      startPolling()
+    }
+  } catch (error) {
+    console.error('提交搜索任务失败:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 // 清除搜索
@@ -156,44 +187,46 @@ const changePage = async (page) => {
 
 // 获取事件列表
 const fetchEvents = async () => {
-  loading.value = true
   try {
-    let response
+    const response = await getEvents()
     
-    if (searchQuery.value) {
-      // 搜索模式：调用搜索接口
-      const params = {
-        query: searchQuery.value,
-        language: 'zh-CN',
-        region: 'CN',
-        limit: 20
-      }
-      response = await searchEvents(params)
+    if (response.success && response.data) {
+      events.value = response.data.events
+      total.value = response.data.total
+      totalPages.value = 1
       
-      if (response.success && response.data) {
-        // 搜索返回单个事件和文章列表
-        const event = response.data.event
-        events.value = [event]
-        total.value = 1
-        totalPages.value = 1
-      }
-    } else {
-      // 列表模式：获取所有已缓存的事件
-      response = await getEvents()
-      
-      if (response.success && response.data) {
-        events.value = response.data.events
-        total.value = response.data.total
-        totalPages.value = 1
+      // 检查是否还有处理中的任务
+      const hasProcessing = events.value.some(e => e.status === 'processing')
+      if (!hasProcessing && pollingInterval.value) {
+        // 没有处理中的任务，停止轮询
+        stopPolling()
       }
     }
   } catch (error) {
     console.error('获取事件列表失败:', error)
-    // 显示错误状态
     events.value = []
     total.value = 0
-  } finally {
-    loading.value = false
+  }
+}
+
+// 开始轮询
+const startPolling = () => {
+  // 清除现有定时器
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value)
+  }
+  
+  // 每2秒更新一次
+  pollingInterval.value = setInterval(() => {
+    fetchEvents()
+  }, 2000)
+}
+
+// 停止轮询
+const stopPolling = () => {
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value)
+    pollingInterval.value = null
   }
 }
 
@@ -203,9 +236,19 @@ const goToDetail = (id) => {
 }
 
 // 初始加载
-onMounted(() => {
+onMounted(async () => {
   // 初始加载时获取已缓存的事件列表
-  fetchEvents()
+  await fetchEvents()
+  // 开始轮询（如果有处理中的任务）
+  const hasProcessing = events.value.some(e => e.status === 'processing')
+  if (hasProcessing) {
+    startPolling()
+  }
+})
+
+// 组件卸载时清理
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
 
