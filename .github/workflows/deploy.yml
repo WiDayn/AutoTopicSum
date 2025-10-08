@@ -72,12 +72,6 @@ jobs:
             echo "安装Python依赖..."
             pip install -r requirements.txt
             
-            # 复制环境变量文件（如果不存在）
-            if [ ! -f ".env" ]; then
-              echo "创建.env文件..."
-              cp .env.example .env
-            fi
-            
             # 创建日志目录
             mkdir -p logs
             
