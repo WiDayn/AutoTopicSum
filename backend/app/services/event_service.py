@@ -5,10 +5,17 @@ from collections import defaultdict
 import hashlib
 import logging
 import uuid
+import requests
+import re
+import json
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 from app.core.aggregator import aggregator
 from app.core.task_queue import task_queue, TaskStatus
 from app.sources.google_news import GoogleNewsSource
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +26,15 @@ class EventService:
     def __init__(self):
         # 初始化聚合器并注册数据源
         self._init_sources()
-        # 简单的内存存储（实际项目中应使用数据库）
+        # 简单的内存存储
         self.events_cache = {}
         self.articles_cache = {}
+        # 媒体信息缓存，避免重复分析同一媒体
+        self.media_info_cache = {}
+        # 缓存锁，保证线程安全
+        self.cache_lock = threading.Lock()
+        # 加载持久化的媒体缓存
+        self._load_media_cache()
     
     def _init_sources(self):
         """初始化数据源"""
@@ -119,11 +132,8 @@ class EventService:
         language = params.get('language', 'zh-CN')
         region = params.get('region', 'CN')
         
-        # 获取数据源数量
-        source_count = aggregator.get_source_count()
-        
-        # 从所有数据源搜索
-        update_progress(0, source_count, f'开始从 {source_count} 个数据源搜索...')
+        # 阶段1: 从数据源搜索
+        update_progress(0, 100, '步骤1/3: 开始搜索新闻...')
         
         results = aggregator.search_all(
             query,
@@ -131,16 +141,20 @@ class EventService:
             region=region
         )
         
-        # 聚合结果
-        update_progress(source_count, source_count, '正在聚合结果...')
+        # 阶段2: 聚合结果
+        update_progress(33, 100, '步骤2/3: 正在聚合结果...')
         aggregated_articles = aggregator.aggregate_results(results)
         
+        # 阶段3: 分析媒体来源
+        update_progress(66, 100, '步骤3/3: 正在分析媒体来源...')
+        media_info_dict = self._analyze_sources(aggregated_articles, update_progress)
+        
         # 生成事件
-        event = self._create_event_from_articles(query, aggregated_articles)
+        event = self._create_event_from_articles(query, aggregated_articles, media_info_dict)
         event['status'] = 'completed'
         event['progress'] = {
-            'current': source_count,
-            'total': source_count,
+            'current': 100,
+            'total': 100,
             'message': '完成'
         }
         
@@ -150,13 +164,15 @@ class EventService:
         return {
             'event_id': event['id'],
             'article_count': len(aggregated_articles),
-            'source_count': len(results)
+            'source_count': len(results),
+            'media_analyzed': len(media_info_dict)
         }
     
     def _create_event_from_articles(
         self,
         query: str,
-        articles: List[Dict]
+        articles: List[Dict],
+        media_info_dict: Optional[Dict[str, Dict]] = None
     ) -> Dict:
         """
         从文章列表创建事件
@@ -164,6 +180,7 @@ class EventService:
         Args:
             query: 搜索关键词
             articles: 文章列表
+            media_info_dict: 媒体信息字典（可选）
             
         Returns:
             事件对象
@@ -176,15 +193,22 @@ class EventService:
         if articles:
             summary = articles[0].get('summary', '')[:200]
         
-        # 提取所有来源
+        # 提取所有来源，并关联媒体信息
         sources = []
         for article in articles:
-            sources.append({
+            source_name = article.get('source', '')
+            source_item = {
                 'title': article.get('title', ''),
                 'url': article.get('url', ''),
-                'source': article.get('source', ''),
+                'source': source_name,
                 'published_at': article.get('published_at', '')
-            })
+            }
+            
+            # 添加媒体信息（如果有）
+            if media_info_dict and source_name in media_info_dict:
+                source_item['media_info'] = media_info_dict[source_name]
+            
+            sources.append(source_item)
         
         # 提取标签（从所有文章中）
         tags = self._extract_tags(articles)
@@ -207,7 +231,11 @@ class EventService:
             'source_count': len(sources),
             'sources': sources,
             'tags': tags,
-            'created_at': datetime.now().isoformat()
+            'created_at': datetime.now().isoformat(),
+            'media_analysis': {
+                'total_media': len(media_info_dict) if media_info_dict else 0,
+                'media_info': media_info_dict if media_info_dict else {}
+            }
         }
         
         return event
@@ -321,6 +349,289 @@ class EventService:
             return None
         
         return task.to_dict()
+    
+    def _analyze_media_with_ai(self, media_name: str) -> Optional[Dict]:
+        """
+        使用硅基流动 AI 分析媒体信息（线程安全）
+        
+        Args:
+            media_name: 媒体名称
+            
+        Returns:
+            媒体信息字典或None（如果分析失败）
+        """
+        # 检查缓存（线程安全）
+        with self.cache_lock:
+            if media_name in self.media_info_cache:
+                logger.info(f"从缓存中获取媒体信息: {media_name}")
+                return self.media_info_cache[media_name]
+        
+        # 检查是否配置了 API Key
+        if not Config.SILICONFLOW_API_KEY:
+            logger.warning("未配置 SILICONFLOW_API_KEY，跳过媒体分析")
+            return None
+        
+        # 构建 prompt
+        prompt = f"""请用官方媒体，个人账号，知名报纸，科技博客etc，或按政治光谱/立场，所有制与资金来源，内容垂直领域，地理位置与目标受众评价这个媒体的立场，不需要给出分析，直接得出结果，如果有多个关键词请用/隔开，不需要额外的任何解释，严格遵守输出格式：
+目标媒体：{media_name}
+输出格式：
+所有制：
+资金来源：
+政治立场：
+内容领域：
+地理位置：
+目标受众：
+媒体类别："""
+        
+        try:
+            # 调用硅基流动 API
+            headers = {
+                'Authorization': f'Bearer {Config.SILICONFLOW_API_KEY}',
+                'Content-Type': 'application/json'
+            }
+            
+            payload = {
+                'model': Config.SILICONFLOW_MODEL,
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': prompt
+                    }
+                ],
+                'temperature': 0.3,
+                'max_tokens': 500
+            }
+            
+            logger.info(f"正在分析媒体: {media_name}")
+            response = requests.post(
+                Config.SILICONFLOW_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=300
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"API 请求失败: {response.status_code} - {response.text}")
+                return None
+            
+            result = response.json()
+            content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+            
+            if not content:
+                logger.error(f"API 返回内容为空")
+                return None
+            
+            # 解析返回的内容
+            media_info = self._parse_media_info(content, media_name)
+            
+            # 缓存结果（线程安全）
+            if media_info:
+                with self.cache_lock:
+                    self.media_info_cache[media_name] = media_info
+                logger.info(f"成功分析媒体: {media_name}")
+            
+            return media_info
+            
+        except requests.exceptions.Timeout:
+            logger.error(f"分析媒体 {media_name} 超时")
+            return None
+        except Exception as e:
+            logger.error(f"分析媒体 {media_name} 失败: {str(e)}")
+            return None
+    
+    def _parse_media_info(self, content: str, media_name: str) -> Dict:
+        """
+        解析 AI 返回的媒体信息
+        
+        Args:
+            content: AI 返回的内容
+            media_name: 媒体名称
+            
+        Returns:
+            解析后的媒体信息字典
+        """
+        media_info = {
+            'name': media_name,
+            'ownership': '',
+            'funding': '',
+            'political_stance': '',
+            'content_domain': '',
+            'location': '',
+            'target_audience': '',
+            'category': ''
+        }
+        
+        try:
+            # 使用正则表达式提取各个字段
+            patterns = {
+                'ownership': r'所有制[:：]\s*(.+)',
+                'funding': r'资金来源[:：]\s*(.+)',
+                'political_stance': r'政治立场[:：]\s*(.+)',
+                'content_domain': r'内容领域[:：]\s*(.+)',
+                'location': r'地理位置[:：]\s*(.+)',
+                'target_audience': r'目标受众[:：]\s*(.+)',
+                'category': r'媒体类别[:：]\s*(.+)'
+            }
+            
+            for key, pattern in patterns.items():
+                match = re.search(pattern, content)
+                if match:
+                    media_info[key] = match.group(1).strip()
+            
+            return media_info
+            
+        except Exception as e:
+            logger.error(f"解析媒体信息失败: {str(e)}")
+            return media_info
+    
+    def _analyze_sources(self, articles: List[Dict], update_progress=None) -> Dict[str, Dict]:
+        """
+        分析所有文章的媒体来源（使用线程池并发处理）
+        
+        Args:
+            articles: 文章列表
+            update_progress: 进度更新函数
+            
+        Returns:
+            媒体信息字典 {media_name: media_info}
+        """
+        # 提取所有唯一的媒体来源
+        sources = set()
+        for article in articles:
+            source = article.get('source', '').strip()
+            if source:
+                sources.add(source)
+        
+        logger.info(f"发现 {len(sources)} 个唯一媒体来源")
+        
+        if not sources:
+            return {}
+        
+        # 分析每个媒体来源（使用线程池并发）
+        media_info_dict = {}
+        total_sources = len(sources)
+        completed_count = 0
+        new_media_analyzed = 0
+        
+        # 创建锁用于线程安全的计数和进度更新
+        lock = threading.Lock()
+        
+        def analyze_single_media(source):
+            """分析单个媒体的辅助函数"""
+            nonlocal completed_count, new_media_analyzed
+            
+            # 记录分析前缓存中是否有这个媒体
+            with self.cache_lock:
+                had_in_cache = source in self.media_info_cache
+            
+            media_info = self._analyze_media_with_ai(source)
+            
+            # 线程安全的更新进度
+            with lock:
+                completed_count += 1
+                is_new_media = False
+                
+                if media_info:
+                    media_info_dict[source] = media_info
+                    # 如果是新分析的媒体（之前不在缓存中），计数
+                    if not had_in_cache:
+                        new_media_analyzed += 1
+                        is_new_media = True
+                
+                # 更新进度
+                if update_progress:
+                    # 计算媒体分析阶段的进度 (66-100之间)
+                    media_progress = 66 + int((completed_count / total_sources) * 34)
+                    update_progress(
+                        media_progress,
+                        100,
+                        f'步骤3/3: 正在分析媒体来源 ({completed_count}/{total_sources})'
+                    )
+            
+            # 如果是新分析的媒体，立即保存到文件（防止中断导致数据丢失）
+            if is_new_media:
+                try:
+                    self._save_media_cache()
+                    logger.info(f"已保存新分析的媒体: {source}")
+                except Exception as e:
+                    logger.error(f"保存媒体缓存时出错: {str(e)}")
+            
+            return media_info
+        
+        # 使用线程池并发处理，最大10个线程
+        max_workers = min(10, total_sources)  # 不超过媒体数量
+        logger.info(f"使用 {max_workers} 个线程并发分析媒体")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # 提交所有任务
+            future_to_source = {
+                executor.submit(analyze_single_media, source): source 
+                for source in sources
+            }
+            
+            # 等待所有任务完成
+            for future in as_completed(future_to_source):
+                source = future_to_source[future]
+                try:
+                    future.result()  # 获取结果，会抛出任何异常
+                except Exception as e:
+                    logger.error(f"分析媒体 {source} 时出错: {str(e)}")
+        
+        # 所有媒体分析完成
+        if new_media_analyzed > 0:
+            logger.info(f"本次共新分析了 {new_media_analyzed} 个媒体（已实时保存）")
+        
+        logger.info(f"成功分析 {len(media_info_dict)} 个媒体来源")
+        return media_info_dict
+    
+    def _load_media_cache(self):
+        """从JSON文件加载媒体缓存"""
+        cache_file = Config.MEDIA_CACHE_FILE
+        
+        try:
+            # 确保目录存在
+            cache_dir = os.path.dirname(cache_file)
+            if cache_dir and not os.path.exists(cache_dir):
+                os.makedirs(cache_dir)
+                logger.info(f"创建缓存目录: {cache_dir}")
+            
+            # 如果文件存在，加载缓存
+            if os.path.exists(cache_file):
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    self.media_info_cache = json.load(f)
+                logger.info(f"从文件加载了 {len(self.media_info_cache)} 个媒体缓存")
+            else:
+                logger.info("缓存文件不存在，将创建新的缓存")
+                self.media_info_cache = {}
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"缓存文件格式错误: {str(e)}，将使用空缓存")
+            self.media_info_cache = {}
+        except Exception as e:
+            logger.error(f"加载媒体缓存失败: {str(e)}，将使用空缓存")
+            self.media_info_cache = {}
+    
+    def _save_media_cache(self):
+        """保存媒体缓存到JSON文件（线程安全）"""
+        cache_file = Config.MEDIA_CACHE_FILE
+        
+        try:
+            # 确保目录存在
+            cache_dir = os.path.dirname(cache_file)
+            if cache_dir and not os.path.exists(cache_dir):
+                os.makedirs(cache_dir)
+            
+            # 保存缓存（线程安全）
+            with self.cache_lock:
+                cache_data = dict(self.media_info_cache)  # 复制一份避免长时间持有锁
+            
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"已保存 {len(cache_data)} 个媒体缓存到文件")
+            
+        except Exception as e:
+            logger.error(f"保存媒体缓存失败: {str(e)}")
 
 
 # 全局服务实例

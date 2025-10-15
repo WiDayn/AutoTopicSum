@@ -20,16 +20,18 @@
       <!-- 进度条（处理中时显示） -->
       <div v-if="event.status === 'processing' && event.progress" class="space-y-2">
         <div class="flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">
-            {{ event.progress.message || '正在处理...' }}
-          </span>
-          <span class="text-muted-foreground" v-if="event.progress.total > 0">
-            {{ event.progress.current }} / {{ event.progress.total }}
+          <div class="flex flex-col gap-1">
+            <span class="text-muted-foreground font-medium">
+              {{ event.progress.message || '正在处理...' }}
+            </span>
+          </div>
+          <span class="text-muted-foreground font-semibold" v-if="event.progress.total > 0">
+            {{ progressPercent }}%
           </span>
         </div>
-        <div class="w-full bg-secondary rounded-full h-2 overflow-hidden">
+        <div class="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
           <div 
-            class="bg-primary h-full transition-all duration-300"
+            class="bg-primary h-full transition-all duration-500 ease-out"
             :style="{ width: progressPercent + '%' }"
           ></div>
         </div>
@@ -44,14 +46,19 @@
       </p>
       
       <!-- 元信息 -->
-      <div v-if="event.status !== 'processing'" class="flex items-center gap-4 text-sm text-muted-foreground">
-        <div class="flex items-center gap-1">
-          <Calendar class="h-4 w-4" />
-          <span>{{ formatDate(event.date) }}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <FileText class="h-4 w-4" />
-          <span>{{ event.source_count }} 个来源</span>
+      <div v-if="event.status !== 'processing'" class="space-y-2">
+        <div class="flex items-center gap-4 text-sm text-muted-foreground">
+          <div class="flex items-center gap-1">
+            <Calendar class="h-4 w-4" />
+            <span>{{ formatDate(event.date) }}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <FileText class="h-4 w-4" />
+            <span>{{ event.source_count }} 个来源</span>
+          </div>
+          <div v-if="event.media_analysis && event.media_analysis.total_media > 0" class="flex items-center gap-1">
+            <span class="text-xs">📊 {{ event.media_analysis.total_media }} 个媒体已分析</span>
+          </div>
         </div>
       </div>
     </div>

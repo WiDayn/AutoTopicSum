@@ -144,14 +144,13 @@ class GoogleNewsSource(BaseNewsSource):
             
             # 提取来源
             source = entry.get('source', {}).get('title', 'Google News')
-            
-            # 创建文章对象
+
             article = NewsArticle(
                 title=title,
                 url=url,
                 source=source,
                 published_at=published_at,
-                summary=summary
+                summary=summary,
             )
             
             return article
