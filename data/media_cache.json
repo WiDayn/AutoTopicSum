@@ -498,5 +498,45 @@
     "location": "中国",
     "target_audience": "科技爱好者、IT从业者、学生",
     "category": "新闻媒体"
+  },
+  "AASTOCKS.com": {
+    "name": "AASTOCKS.com",
+    "ownership": "商业所有制",
+    "funding": "股权融资",
+    "political_stance": "无明显政治立场/中立",
+    "content_domain": "财经/股票/市场分析",
+    "location": "香港",
+    "target_audience": "个人投资者/华人投资者",
+    "category": "财经媒体"
+  },
+  "Zaobao": {
+    "name": "Zaobao",
+    "ownership": "政府所有/国有",
+    "funding": "政府补贴/广告",
+    "political_stance": "中立/支持政府政策",
+    "content_domain": "新闻/政治/经济/社会/科技",
+    "location": "新加坡",
+    "target_audience": "新加坡本地读者",
+    "category": "日报"
+  },
+  "雪球": {
+    "name": "雪球",
+    "ownership": "私人所有",
+    "funding": "广告/会员/内容分成/投资",
+    "political_stance": "自由主义",
+    "content_domain": "财经/投资/股票",
+    "location": "中国",
+    "target_audience": "个人投资者",
+    "category": "财经自媒体"
+  },
+  "中华网": {
+    "name": "中华网",
+    "ownership": "国有控股",
+    "funding": "政府支持/企业资本/广告收入",
+    "political_stance": "官方/民族主义",
+    "content_domain": "新闻/财经/科技/综合",
+    "location": "中国大陆",
+    "target_audience": "中国大陆用户",
+    "category": "综合新闻门户网站"
   }
 }
