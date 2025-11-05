@@ -538,5 +538,45 @@
     "location": "中国大陆",
     "target_audience": "中国大陆用户",
     "category": "综合新闻门户网站"
+  },
+  "World Bank Blogs": {
+    "name": "World Bank Blogs",
+    "ownership": "国际组织",
+    "funding": "成员国认缴",
+    "political_stance": "中立/发展导向",
+    "content_domain": "发展经济学/全球贫困/基础设施",
+    "location": "全球",
+    "target_audience": "国际发展机构/政策制定者/学者",
+    "category": "国际机构官方博客"
+  },
+  "International Atomic Energy Agency": {
+    "name": "International Atomic Energy Agency",
+    "ownership": "联合国专门机构",
+    "funding": "成员国缴纳的会费",
+    "political_stance": "中立/技术导向",
+    "content_domain": "核能安全/核不扩散/辐射防护",
+    "location": "总部位于奥地利维也纳",
+    "target_audience": "政府机构/国际组织/科研人员/公众",
+    "category": "国际组织/专业机构"
+  },
+  "Markets.com": {
+    "name": "Markets.com",
+    "ownership": "私营企业/",
+    "funding": "Interactive Brokers Group/",
+    "political_stance": "中立/自由市场/",
+    "content_domain": "金融交易/外汇/股票/加密货币/交易平台/",
+    "location": "全球/",
+    "target_audience": "全球零售交易者/",
+    "category": "金融科技/金融信息服务提供商"
+  },
+  "Eco": {
+    "name": "Eco",
+    "ownership": "资金来源：",
+    "funding": "政治立场：自由主义",
+    "political_stance": "自由主义",
+    "content_domain": "环保/科技/可持续发展",
+    "location": "全球",
+    "target_audience": "科技与环保爱好者",
+    "category": "科技博客/新闻媒体"
   }
 }

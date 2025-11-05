@@ -5,3 +5,7 @@ requests
 beautifulsoup4
 lxml
 python-dateutil
+selenium
+webdriver-manager
+python-Levenshtein
+difflib

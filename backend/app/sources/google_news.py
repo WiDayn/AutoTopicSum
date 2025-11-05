@@ -5,9 +5,19 @@ from typing import List, Optional
 from datetime import datetime
 import re
 import logging
+import time
 from urllib.parse import urljoin, quote
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
 from app.core.base_source import BaseNewsSource, NewsArticle
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -22,18 +32,81 @@ class GoogleNewsSource(BaseNewsSource):
         super().__init__("Google News")
         self.base_url = "https://news.google.com"
         self.search_url = f"{self.base_url}/search"
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        }
+        self.driver = None
+    
+    def _create_driver(self):
+        """创建并配置 Chrome WebDriver"""
+        try:
+            print("  → 开始配置 Chrome 选项...")
+            logger.info("开始配置 Chrome 选项...")
+            chrome_options = Options()
+            # chrome_options.add_argument('--headless')  # 无头模式
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+            chrome_options.add_argument('--window-size=1920,1080')
+            chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+            
+            # 配置代理（如果启用）
+            if Config.WEBDRIVER_PROXY_ENABLED and Config.WEBDRIVER_PROXY:
+                proxy_url = Config.WEBDRIVER_PROXY
+                chrome_options.add_argument(f'--proxy-server={proxy_url}')
+                
+                proxy_type = "HTTP/HTTPS"
+                if proxy_url.startswith('socks5://'):
+                    proxy_type = "SOCKS5"
+                elif proxy_url.startswith('socks4://'):
+                    proxy_type = "SOCKS4"
+                
+                print(f"  → 使用 {proxy_type} 代理: {proxy_url}")
+                logger.info(f"WebDriver 使用 {proxy_type} 代理: {proxy_url}")
+            else:
+                print("  → 未配置代理")
+                logger.info("WebDriver 未配置代理")
+            
+            # 禁用图片和CSS加载以提高速度
+            prefs = {
+                'profile.managed_default_content_settings.images': 2,
+                'profile.managed_default_content_settings.stylesheets': 2
+            }
+            chrome_options.add_experimental_option('prefs', prefs)
+            
+            print("  → 正在下载/安装 ChromeDriver...")
+            logger.info("正在下载/安装 ChromeDriver...")
+            # 使用 webdriver-manager 自动管理 ChromeDriver
+            service = Service(ChromeDriverManager().install())
+            
+            print("  → 正在启动 Chrome 浏览器...")
+            logger.info("正在启动 Chrome 浏览器...")
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            
+            print("  ✅ Chrome WebDriver 创建成功")
+            logger.info("Chrome WebDriver 创建成功")
+            return driver
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"创建 WebDriver 失败: {str(e)}"
+            print(f"  ❌ {error_msg}")
+            print(f"  错误详情:\n{traceback.format_exc()}")
+            logger.error(error_msg)
+            logger.error(f"错误详情:\n{traceback.format_exc()}")
+            return None
+    
+    def _close_driver(self):
+        """关闭 WebDriver"""
+        if self.driver:
+            try:
+                self.driver.quit()
+                self.driver = None
+                logger.info("WebDriver 已关闭")
+            except Exception as e:
+                logger.error(f"关闭 WebDriver 失败: {str(e)}")
     
     def search(self, query: str, **kwargs) -> List[NewsArticle]:
         """
-        搜索Google News（直接解析网页）
+        搜索Google News（使用 Selenium）
         
         Args:
             query: 搜索关键词
@@ -48,47 +121,170 @@ class GoogleNewsSource(BaseNewsSource):
         region = kwargs.get('region', 'CN')
         limit = self.DEFAULT_LIMIT
         
+        driver = None
         try:
+            print(f"\n{'='*60}")
+            print(f"开始使用 Selenium WebDriver 搜索 Google News: {query}")
+            print(f"{'='*60}\n")
+            logger.info("开始使用 Selenium WebDriver 搜索 Google News")
+            
+            # 创建 WebDriver
+            print("正在创建 Chrome WebDriver...")
+            logger.info("正在创建 Chrome WebDriver...")
+            driver = self._create_driver()
+            if not driver:
+                print("❌ 无法创建 WebDriver，使用备用方法 (requests)")
+                logger.warning("无法创建 WebDriver，使用备用方法 (requests)")
+                return self._fallback_search(query, language, region)
+            
+            print("✅ WebDriver 创建成功，开始搜索")
+            logger.info("WebDriver 创建成功，开始搜索")
+            
             # 构建搜索URL
-            params = {
-                'q': query,
-                'hl': language,
-                'gl': region
-            }
+            url = f"{self.search_url}?q={quote(query)}&hl={language}&gl={region}"
             
             logger.info(f"正在从 Google News 搜索: {query}")
+            logger.info(f"URL: {url}")
             
-            # 发起请求
-            response = requests.get(
-                self.search_url,
-                params=params,
-                headers=self.headers,
-                timeout=15
-            )
-            response.raise_for_status()
+            # 访问页面
+            driver.get(url)
             
-            # 解析HTML
-            soup = BeautifulSoup(response.content, 'lxml')
+            # 等待页面加载
+            time.sleep(3)
+            
+            # 滚动加载更多内容
             articles = []
+            last_article_count = 0
+            scroll_attempts = 0
+            max_scroll_attempts = 10  # 最多滚动10次
             
-            # 查找所有新闻文章元素
-            # Google News 使用特定的 HTML 结构
+            while len(articles) < limit and scroll_attempts < max_scroll_attempts:
+                # 获取当前页面HTML
+                page_source = driver.page_source
+                soup = BeautifulSoup(page_source, 'lxml')
+                
+                # 查找所有文章元素
+                article_elements = soup.find_all('article')
+                
+                logger.info(f"找到 {len(article_elements)} 个文章元素 (滚动第 {scroll_attempts + 1} 次)")
+                
+                # 解析新找到的文章
+                current_articles = []
+                for article_elem in article_elements:
+                    article = self._parse_article_element(article_elem)
+                    if article and article not in articles:
+                        current_articles.append(article)
+                
+                articles.extend(current_articles)
+                
+                # 去重
+                seen = set()
+                unique_articles = []
+                for article in articles:
+                    key = (article.title, article.url)
+                    if key not in seen:
+                        seen.add(key)
+                        unique_articles.append(article)
+                articles = unique_articles
+                
+                # 检查是否有新文章
+                if len(articles) == last_article_count:
+                    logger.info("没有新文章，停止滚动")
+                    break
+                
+                last_article_count = len(articles)
+                
+                # 如果已经达到目标数量，停止滚动
+                if len(articles) >= limit:
+                    logger.info(f"已获取足够的文章: {len(articles)}")
+                    break
+                
+                # 滚动到页面底部
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(2)  # 等待内容加载
+                
+                scroll_attempts += 1
+            
+            logger.info(f"从Google News获取到 {len(articles)} 篇文章")
+            
+            # 关闭 WebDriver
+            driver.quit()
+            
+            return articles[:limit]
+            
+        except Exception as e:
+            import traceback
+            logger.error(f"Google News搜索失败: {str(e)}")
+            logger.error(f"错误详情:\n{traceback.format_exc()}")
+            
+            # 确保关闭 WebDriver
+            if driver:
+                try:
+                    logger.info("正在关闭 WebDriver...")
+                    driver.quit()
+                    logger.info("WebDriver 已关闭")
+                except Exception as close_error:
+                    logger.error(f"关闭 WebDriver 时出错: {str(close_error)}")
+            
+            # 尝试使用备用方法
+            logger.info("尝试使用备用搜索方法...")
+            try:
+                return self._fallback_search(query, language, region)
+            except Exception as fallback_error:
+                logger.error(f"备用搜索方法也失败: {str(fallback_error)}")
+                return []
+    
+    def _fallback_search(self, query: str, language: str, region: str) -> List[NewsArticle]:
+        """
+        备用搜索方法（使用 requests，无需 Selenium）
+        
+        Args:
+            query: 搜索关键词
+            language: 语言代码
+            region: 地区代码
+            
+        Returns:
+            新闻文章列表
+        """
+        try:
+            print(f"\n{'='*60}")
+            print("⚠️  使用备用方法搜索（requests，不使用 Selenium）")
+            print(f"{'='*60}\n")
+            logger.warning("=" * 50)
+            logger.warning("使用备用方法搜索（requests，不使用 Selenium）")
+            logger.warning("=" * 50)
+            
+            url = f"{self.search_url}?q={quote(query)}&hl={language}&gl={region}"
+            logger.info(f"请求 URL: {url}")
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            logger.info("发送 HTTP 请求...")
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            logger.info(f"HTTP 响应状态码: {response.status_code}")
+            
+            logger.info("解析 HTML...")
+            soup = BeautifulSoup(response.content, 'lxml')
             article_elements = soup.find_all('article')
+            logger.info(f"找到 {len(article_elements)} 个 article 元素")
             
-            logger.info(f"找到 {len(article_elements)} 个文章元素")
-            
-            for article_elem in article_elements[:limit]:
+            articles = []
+            for article_elem in article_elements[:50]:  # 限制50篇
                 article = self._parse_article_element(article_elem)
                 if article:
                     articles.append(article)
             
-            logger.info(f"从Google News获取到 {len(articles)} 篇文章")
+            logger.warning(f"备用方法获取到 {len(articles)} 篇文章")
+            logger.warning("=" * 50)
             return articles
             
         except Exception as e:
-            logger.error(f"Google News搜索失败: {str(e)}")
             import traceback
-            logger.error(traceback.format_exc())
+            logger.error(f"备用搜索也失败: {str(e)}")
+            logger.error(f"错误详情:\n{traceback.format_exc()}")
             return []
     
     def get_latest(self, limit: int = 10) -> List[NewsArticle]:
@@ -102,14 +298,14 @@ class GoogleNewsSource(BaseNewsSource):
             新闻文章列表
         """
         try:
-            # 获取热门新闻
+            # 使用备用方法获取最新新闻
             url = f"{self.base_url}?hl=zh-CN&gl=CN"
             
-            response = requests.get(
-                url,
-                headers=self.headers,
-                timeout=15
-            )
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'lxml')
