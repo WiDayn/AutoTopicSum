@@ -8,4 +8,6 @@ python-dateutil
 selenium
 webdriver-manager
 python-Levenshtein
-difflib
+numpy
+scikit-learn
+sentence-transformers

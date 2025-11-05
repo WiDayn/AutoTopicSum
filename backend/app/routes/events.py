@@ -2,6 +2,7 @@
 from flask import jsonify, request
 from app.routes import api_bp
 from app.services.event_service import event_service
+from app.core.beat_encoder import beat_encoder
 
 
 @api_bp.route('/events/search', methods=['POST'])
@@ -134,4 +135,26 @@ def health_check():
         'success': True,
         'message': 'API服务运行正常'
     })
+
+
+@api_bp.route('/beat/encoding-record', methods=['GET'])
+def get_beat_encoding_record():
+    """
+    获取BEAT编码器记录接口
+    返回编码映射和最后一次聚类的统计信息
+    """
+    try:
+        record = beat_encoder.get_encoding_record()
+        
+        return jsonify({
+            'success': True,
+            'data': record,
+            'message': '获取成功'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'data': None,
+            'message': f'获取失败: {str(e)}'
+        }), 500
 

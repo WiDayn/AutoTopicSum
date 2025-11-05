@@ -15,6 +15,7 @@ import threading
 from app.core.aggregator import aggregator
 from app.core.task_queue import task_queue, TaskStatus
 from app.sources.google_news import GoogleNewsSource
+from app.core.beat_encoder import beat_encoder
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -424,6 +425,11 @@ class EventService:
             # 解析返回的内容
             media_info = self._parse_media_info(content, media_name)
             
+            # 使用BEAT编码器聚合相似关键词
+            if media_info:
+                media_info = beat_encoder.encode_media_info(media_info)
+                logger.debug(f"媒体 {media_name} 的关键词已编码")
+            
             # 缓存结果（线程安全）
             if media_info:
                 with self.cache_lock:
@@ -598,8 +604,18 @@ class EventService:
             # 如果文件存在，加载缓存
             if os.path.exists(cache_file):
                 with open(cache_file, 'r', encoding='utf-8') as f:
-                    self.media_info_cache = json.load(f)
-                logger.info(f"从文件加载了 {len(self.media_info_cache)} 个媒体缓存")
+                    raw_cache = json.load(f)
+                
+                # 使用BEAT编码器对加载的缓存进行编码（确保一致性）
+                self.media_info_cache = beat_encoder.batch_encode(raw_cache)
+                
+                # 如果编码后有变化，保存更新后的缓存
+                if raw_cache != self.media_info_cache:
+                    logger.info("检测到缓存数据需要编码更新，正在保存...")
+                    with open(cache_file, 'w', encoding='utf-8') as f:
+                        json.dump(self.media_info_cache, f, ensure_ascii=False, indent=2)
+                
+                logger.info(f"从文件加载了 {len(self.media_info_cache)} 个媒体缓存（已编码）")
             else:
                 logger.info("缓存文件不存在，将创建新的缓存")
                 self.media_info_cache = {}
@@ -612,7 +628,7 @@ class EventService:
             self.media_info_cache = {}
     
     def _save_media_cache(self):
-        """保存媒体缓存到JSON文件（线程安全）"""
+        """保存媒体缓存到JSON文件（线程安全，自动编码）"""
         cache_file = Config.MEDIA_CACHE_FILE
         
         try:
@@ -625,10 +641,13 @@ class EventService:
             with self.cache_lock:
                 cache_data = dict(self.media_info_cache)  # 复制一份避免长时间持有锁
             
-            with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump(cache_data, f, ensure_ascii=False, indent=2)
+            # 使用BEAT编码器对所有媒体信息进行编码
+            encoded_cache_data = beat_encoder.batch_encode(cache_data)
             
-            logger.info(f"已保存 {len(cache_data)} 个媒体缓存到文件")
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(encoded_cache_data, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"已保存 {len(encoded_cache_data)} 个媒体缓存到文件（已编码）")
             
         except Exception as e:
             logger.error(f"保存媒体缓存失败: {str(e)}")

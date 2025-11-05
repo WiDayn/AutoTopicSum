@@ -28,3 +28,10 @@ export const getTaskStatus = (taskId) => {
   return apiClient.get(`/tasks/${taskId}`)
 }
 
+/**
+ * 获取BEAT编码记录
+ */
+export const getBeatEncodingRecord = () => {
+  return apiClient.get('/beat/encoding-record')
+}
+

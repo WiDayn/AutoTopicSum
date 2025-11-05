@@ -3,7 +3,13 @@
     <!-- 头部 -->
     <header class="border-b">
       <div class="container mx-auto px-4 py-6">
-        <h1 class="text-3xl font-bold mb-6">新闻聚合引擎</h1>
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-3xl font-bold">新闻聚合引擎</h1>
+          <Button variant="outline" @click="goToBeatEncoding">
+            <BarChart3 class="mr-2 h-4 w-4" />
+            BEAT编码分析
+          </Button>
+        </div>
         <SearchBar v-model="searchQuery" @search="handleSearch" />
       </div>
     </header>
@@ -111,6 +117,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { BarChart3 } from 'lucide-vue-next'
 import SearchBar from '@/components/SearchBar.vue'
 import EventCard from '@/components/EventCard.vue'
 import Button from '@/components/ui/Button.vue'
@@ -233,6 +240,11 @@ const stopPolling = () => {
 // 跳转到详情页
 const goToDetail = (id) => {
   router.push({ name: 'event-detail', params: { id } })
+}
+
+// 跳转到BEAT编码页面
+const goToBeatEncoding = () => {
+  router.push({ name: 'beat-encoding' })
 }
 
 // 初始加载
