@@ -7,7 +7,7 @@
           <h1 class="text-3xl font-bold">新闻聚合引擎</h1>
           <Button variant="outline" @click="goToBeatEncoding">
             <BarChart3 class="mr-2 h-4 w-4" />
-            BEAT编码分析
+            BEAT编码器媒体分类聚类效果
           </Button>
         </div>
         <SearchBar v-model="searchQuery" @search="handleSearch" />
