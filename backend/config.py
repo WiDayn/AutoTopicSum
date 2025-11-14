@@ -20,8 +20,8 @@ class Config:
     # 媒体分析缓存配置
     MEDIA_CACHE_FILE = os.getenv('MEDIA_CACHE_FILE', 'data/media_cache.json')
     
-    # BEAT 编码器记录配置
-    BEAT_ENCODING_RECORD_FILE = os.getenv('BEAT_ENCODING_RECORD_FILE', 'data/beat_encoding_record.json')
+    # BERT 编码器记录配置
+    BERT_ENCODING_RECORD_FILE = os.getenv('BERT_ENCODING_RECORD_FILE', 'data/bert_encoding_record.json')
     
     # WebDriver 代理配置
     WEBDRIVER_PROXY = os.getenv('WEBDRIVER_PROXY', '')  # 格式: http://host:port 或 socks5://host:port
