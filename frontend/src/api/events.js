@@ -29,9 +29,9 @@ export const getTaskStatus = (taskId) => {
 }
 
 /**
- * 获取BEAT编码记录
+ * 获取BERT编码记录
  */
-export const getBeatEncodingRecord = () => {
-  return apiClient.get('/beat/encoding-record')
+export const getBertEncodingRecord = () => {
+  return apiClient.get('/bert/encoding-record')
 }
 

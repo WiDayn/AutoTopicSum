@@ -13,10 +13,10 @@ const routes = [
     component: () => import('@/views/EventDetailView.vue')
   },
   {
-    path: '/beat-encoding',
-    name: 'beat-encoding',
-    component: () => import('@/views/BeatEncodingView.vue')
-  }
+    path: '/bert-encoding',
+    name: 'bert-encoding',
+    component: () => import('@/views/BertEncodingView.vue')
+  },
 ]
 
 const router = createRouter({
