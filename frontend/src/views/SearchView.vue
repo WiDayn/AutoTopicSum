@@ -5,9 +5,9 @@
       <div class="container mx-auto px-4 py-6">
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-3xl font-bold">新闻聚合引擎</h1>
-          <Button variant="outline" @click="goToBeatEncoding">
+          <Button variant="outline" @click="goToBertEncoding">
             <BarChart3 class="mr-2 h-4 w-4" />
-            BEAT编码器媒体分类聚类效果
+            BERT编码器媒体分类聚类效果
           </Button>
         </div>
         <SearchBar v-model="searchQuery" @search="handleSearch" />
@@ -242,9 +242,9 @@ const goToDetail = (id) => {
   router.push({ name: 'event-detail', params: { id } })
 }
 
-// 跳转到BEAT编码页面
-const goToBeatEncoding = () => {
-  router.push({ name: 'beat-encoding' })
+// 跳转到BERT编码页面
+const goToBertEncoding = () => {
+  router.push({ name: 'bert-encoding' })
 }
 
 // 初始加载

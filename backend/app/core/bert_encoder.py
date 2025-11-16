@@ -1,14 +1,15 @@
-"""BEAT编码器 - 媒体关键词相似度聚合"""
+"""BERT编码器 - 媒体关键词相似度聚合"""
 import logging
-import re
 import json
 import os
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Dict, Optional
 from datetime import datetime
 from difflib import SequenceMatcher
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 from config import Config
+
+logger = logging.getLogger(__name__)
 
 # 尝试导入 sentence-transformers，如果失败则使用字符级别相似度
 try:
@@ -18,11 +19,9 @@ except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
     logger.warning("sentence-transformers 未安装，将使用字符级别相似度计算。建议安装：pip install sentence-transformers")
 
-logger = logging.getLogger(__name__)
 
-
-class BEATEncoder:
-    """BEAT编码器 - 将相似的关键词聚合为统一的关键词"""
+class BERTEncoder:
+    """BERT编码器 - 将相似的关键词聚合为统一的关键词"""
     
     # 相似度阈值
     SIMILARITY_THRESHOLD = 0.7
@@ -62,9 +61,9 @@ class BEATEncoder:
         }
     }
     
-    def __init__(self, similarity_threshold: float = None):
+    def __init__(self, similarity_threshold: Optional[float] = None):
         """
-        初始化BEAT编码器
+        初始化BERT编码器
         
         Args:
             similarity_threshold: 相似度阈值（0-1之间），默认0.7
@@ -77,29 +76,29 @@ class BEATEncoder:
         # 当前聚类映射（临时变量）
         self._current_cluster_mapping: Dict[str, str] = {}
         # 记录文件路径
-        self.record_file = Config.BEAT_ENCODING_RECORD_FILE
+        self.record_file = Config.BERT_ENCODING_RECORD_FILE
         # 是否使用语义相似度
         self._use_semantic_similarity = SENTENCE_TRANSFORMERS_AVAILABLE
         # 加载历史记录
         self._load_record()
-        logger.info(f"BEAT编码器初始化，相似度阈值: {self.similarity_threshold}, 语义相似度: {'启用' if self._use_semantic_similarity else '禁用（使用字符级别相似度）'}")
+        logger.info(f"BERT编码器初始化，相似度阈值: {self.similarity_threshold}, 语义相似度: {'启用' if self._use_semantic_similarity else '禁用（使用字符级别相似度）'}")
     
     def _get_semantic_model(self):
         """懒加载中文语义相似度模型"""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             return None
         
-        if BEATEncoder._semantic_model is None:
+        if BERTEncoder._semantic_model is None:
             try:
                 # 使用多语言模型，支持中文
                 # paraphrase-multilingual-MiniLM-L12-v2 是一个轻量级多语言模型
                 logger.info("正在加载中文语义相似度模型...")
-                BEATEncoder._semantic_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+                BERTEncoder._semantic_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
                 logger.info("中文语义相似度模型加载成功")
             except Exception as e:
                 logger.warning(f"加载语义相似度模型失败: {str(e)}，将使用字符级别相似度")
-                BEATEncoder._semantic_model = False  # 标记为加载失败，避免重复尝试
-        return BEATEncoder._semantic_model if BEATEncoder._semantic_model is not False else None
+                BERTEncoder._semantic_model = None  # 标记为加载失败，避免重复尝试
+        return BERTEncoder._semantic_model
     
     def encode_media_info(self, media_info: Dict) -> Dict:
         """
@@ -157,7 +156,7 @@ class BEATEncoder:
             self.encoding_mapping[field_name] = {}
         
         # 检查是否有全局聚类结果（在batch_encode中预先计算的）
-        global_cluster_stats = None
+        global_cluster_stats = {}
         has_global_clustering = False
         if (self.last_clustering_stats and 
             'fields' in self.last_clustering_stats and 
@@ -314,7 +313,6 @@ class BEATEncoder:
             return keywords
         
         # 批量计算相似度矩阵
-        n = len(keywords)
         similarity_matrix = self._calculate_similarity_matrix_batch(keywords)
         
         # 将相似度转换为距离（距离 = 1 - 相似度）
@@ -707,7 +705,7 @@ class BEATEncoder:
         cluster_sorted = sorted(cluster, key=lambda x: (len(x), x))
         return cluster_sorted[0]
     
-    def batch_encode(self, media_info_dict: Dict[str, Dict]) -> Dict[str, Dict]:
+    def batch_encode_media(self, media_info_dict: Dict[str, Dict]) -> Dict[str, Dict]:
         """
         批量编码多个媒体的信息
         
@@ -819,6 +817,17 @@ class BEATEncoder:
         logger.info(f"批量编码完成，共处理 {len(encoded_dict)} 个媒体")
         return encoded_dict
     
+    def encode_docs(self, docs: List[str]):
+        semantic_model = self._get_semantic_model()
+        if semantic_model is None:
+            pass  # TODO TF-IDF?
+            embeddings = np.random.rand(len(docs), 10)
+        else:
+            # (N, feature_nums)
+            embeddings = semantic_model.encode(docs, normalize_embeddings=True, convert_to_numpy=True)
+        return embeddings
+
+
     def get_statistics(self, media_info_dict: Dict[str, Dict]) -> Dict:
         """
         获取编码前后的统计信息
@@ -830,7 +839,7 @@ class BEATEncoder:
             统计信息字典
         """
         original_keywords = {}
-        encoded_dict = self.batch_encode(media_info_dict)
+        encoded_dict = self.batch_encode_media(media_info_dict)
         
         fields = ['ownership', 'funding', 'political_stance',
                  'content_domain', 'location', 'target_audience', 'category']
@@ -867,13 +876,13 @@ class BEATEncoder:
                     record_data = json.load(f)
                     self.encoding_mapping = record_data.get('encoding_mapping', {})
                     self.last_clustering_stats = record_data.get('last_clustering_stats', None)
-                    logger.info(f"已加载BEAT编码记录: {self.record_file}")
+                    logger.info(f"已加载BERT编码记录: {self.record_file}")
             else:
-                logger.info("BEAT编码记录文件不存在，将创建新记录")
+                logger.info("BERT编码记录文件不存在，将创建新记录")
                 self.encoding_mapping = {}
                 self.last_clustering_stats = None
         except Exception as e:
-            logger.error(f"加载BEAT编码记录失败: {str(e)}")
+            logger.error(f"加载BERT编码记录失败: {str(e)}")
             self.encoding_mapping = {}
             self.last_clustering_stats = None
     
@@ -894,9 +903,9 @@ class BEATEncoder:
             with open(self.record_file, 'w', encoding='utf-8') as f:
                 json.dump(record_data, f, ensure_ascii=False, indent=2)
             
-            logger.info(f"已保存BEAT编码记录: {self.record_file}")
+            logger.info(f"已保存BERT编码记录: {self.record_file}")
         except Exception as e:
-            logger.error(f"保存BEAT编码记录失败: {str(e)}")
+            logger.error(f"保存BERT编码记录失败: {str(e)}")
     
     def get_encoding_record(self) -> Dict:
         """
@@ -913,4 +922,4 @@ class BEATEncoder:
 
 
 # 全局编码器实例
-beat_encoder = BEATEncoder()
+bert_encoder = BERTEncoder()
