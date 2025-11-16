@@ -107,9 +107,9 @@
 import { computed } from 'vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
-import FieldBarChart from '@/components/beat/FieldBarChart.vue'
-import FieldSimilarityGraph from '@/components/beat/FieldSimilarityGraph.vue'
-import FieldMappingTable from '@/components/beat/FieldMappingTable.vue'
+import FieldBarChart from '@/components/bert/FieldBarChart.vue'
+import FieldSimilarityGraph from '@/components/bert/FieldSimilarityGraph.vue'
+import FieldMappingTable from '@/components/bert/FieldMappingTable.vue'
 
 const props = defineProps({
   fieldName: {

@@ -8,7 +8,7 @@
               <ArrowLeft class="mr-2 h-4 w-4" />
               返回
             </Button>
-            <h1 class="text-2xl font-bold">BEAT 编码器媒体分类聚类效果</h1>
+            <h1 class="text-2xl font-bold">BERT 编码器媒体分类聚类效果</h1>
           </div>
           <Badge v-if="recordData" variant="outline">
             相似度阈值：{{ recordData.similarity_threshold ?? '—' }}
@@ -65,10 +65,10 @@ import { ArrowLeft } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
-import ClusteringSummary from '@/components/beat/ClusteringSummary.vue'
-import FieldSummaryTable from '@/components/beat/FieldSummaryTable.vue'
-import FieldDetailPanel from '@/components/beat/FieldDetailPanel.vue'
-import { getBeatEncodingRecord } from '@/api/events'
+import ClusteringSummary from '@/components/bert/ClusteringSummary.vue'
+import FieldSummaryTable from '@/components/bert/FieldSummaryTable.vue'
+import FieldDetailPanel from '@/components/bert/FieldDetailPanel.vue'
+import { getBertEncodingRecord } from '@/api/events'
 
 const router = useRouter()
 
@@ -204,18 +204,18 @@ const formatDate = (dateStr) => {
   }
 }
 
-const fetchBeatEncodingRecord = async () => {
+const fetchBertEncodingRecord = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await getBeatEncodingRecord()
+    const response = await getBertEncodingRecord()
     if (response.success) {
       recordData.value = response.data
     } else {
       error.value = response.message || '获取数据失败'
     }
   } catch (err) {
-    console.error('获取 BEAT 编码记录失败:', err)
+    console.error('获取 BERT 编码记录失败:', err)
     error.value = '获取数据失败，请稍后重试'
   } finally {
     loading.value = false
@@ -223,6 +223,6 @@ const fetchBeatEncodingRecord = async () => {
 }
 
 onMounted(() => {
-  fetchBeatEncodingRecord()
+  fetchBertEncodingRecord()
 })
 </script>
