@@ -5,6 +5,7 @@ from datetime import datetime
 import logging
 
 from app.core.base_source import BaseNewsSource, NewsArticle
+from .text_matcher import TextMatcher
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,9 @@ class NewsAggregator:
     
     def __init__(self):
         self.sources: List[BaseNewsSource] = []
-    
+        self.matcher = TextMatcher()
+        self.similarity_threshold = 0.3  # 关联度阈值（可根据需求调整）
+
     def register_source(self, source: BaseNewsSource):
         """
         注册数据源
@@ -91,6 +94,7 @@ class NewsAggregator:
     
     def aggregate_results(
         self,
+        query: str,
         results: Dict[str, List[NewsArticle]]
     ) -> List[Dict]:
         """
@@ -118,8 +122,27 @@ class NewsAggregator:
             key=lambda x: x.published_at if x.published_at else datetime.min,
             reverse=True
         )
-        
-        return [article.to_dict() for article in all_articles]
+
+        # 计算标题相似度
+        all_titles =  []
+        for article in all_articles:
+            all_titles.append(article.title)
+
+        similarities = self.matcher.calculate_similarity(query, all_titles)
+
+        # 过滤标题相似度低的文章
+        filter_articles = []
+        remain_articles = []
+        for news, sim in zip(all_articles, similarities):
+            if sim >= self.similarity_threshold:
+                news.filter = False
+                filter_articles.append(news)
+            else:
+                news.filter = True
+                remain_articles.append(news)
+
+        combined_articles = filter_articles + remain_articles
+        return [article.to_dict() for article in combined_articles]
     
     def get_source_count(self) -> int:
         """获取已注册的数据源数量"""

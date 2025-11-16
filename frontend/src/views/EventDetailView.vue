@@ -142,6 +142,9 @@
                 <p class="text-sm text-muted-foreground mt-1">
                   来源：{{ source.source }} • {{ formatDate(source.published_at) }}
                 </p>
+                <p class="text-sm mt-1" :class="source.filter ? 'text-red-500' : 'text-green-500'">
+                  是否被过滤：{{ source.filter ? '是' : '否' }}
+                </p>
               </div>
 
               <!-- 媒体信息 -->

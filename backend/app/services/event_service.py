@@ -36,7 +36,7 @@ class EventService:
         self.cache_lock = threading.Lock()
         # 加载持久化的媒体缓存
         self._load_media_cache()
-    
+
     def _init_sources(self):
         """初始化数据源"""
         # 注册Google News数据源
@@ -144,7 +144,7 @@ class EventService:
         
         # 阶段2: 聚合结果
         update_progress(33, 100, '步骤2/3: 正在聚合结果...')
-        aggregated_articles = aggregator.aggregate_results(results)
+        aggregated_articles = aggregator.aggregate_results(query, results)
         
         # 阶段3: 分析媒体来源
         update_progress(66, 100, '步骤3/3: 正在分析媒体来源...')
@@ -201,6 +201,7 @@ class EventService:
             source_item = {
                 'title': article.get('title', ''),
                 'url': article.get('url', ''),
+                'filter': article.get('filter', ''),
                 'source': source_name,
                 'published_at': article.get('published_at', '')
             }
