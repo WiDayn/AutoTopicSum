@@ -386,6 +386,7 @@ class GoogleNewsSource(BaseNewsSource):
                 title=title,
                 url=url,
                 source=source or 'Google News',
+                filter=True,
                 published_at=published_at,
                 summary=summary
             )

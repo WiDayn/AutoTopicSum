@@ -11,3 +11,6 @@ python-Levenshtein
 numpy
 scikit-learn
 sentence-transformers
+nltk
+jieba
+langdetect

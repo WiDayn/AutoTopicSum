@@ -1,6 +1,7 @@
 """事件服务 - 处理新闻聚合和事件生成"""
 from typing import List, Dict, Optional
 from datetime import datetime
+from collections import defaultdict
 import hashlib
 import logging
 import uuid
@@ -148,11 +149,13 @@ class EventService:
         curr_step += 1
 
         # 阶段2: 聚合结果
+        update_progress(33, 100, '步骤2/3: 正在聚合结果...')
+        aggregated_articles = aggregator.aggregate_results(query, results)
         update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在聚合结果...')
         aggregated_articles = aggregator.aggregate_results(results)
         curr_prog += prog_of_single_step
         curr_step += 1
-        
+
         # 阶段3: 分析媒体来源
         update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在分析媒体来源...')
         media_info_dict = self._analyze_sources(aggregated_articles, update_progress, curr_step, total_step)
@@ -170,8 +173,8 @@ class EventService:
         
         # 生成事件
         event = self._create_event_from_articles(
-            query, 
-            aggregated_articles, 
+            query,
+            aggregated_articles,
             media_info_dict,
             timeline_nodes,
         )
@@ -208,7 +211,7 @@ class EventService:
             articles: 文章列表
             media_info_dict: 媒体信息字典（可选）
             timeline_nodes: 时间线dict
-            
+
         Returns:
             事件对象
         """
@@ -235,7 +238,7 @@ class EventService:
 
             if published_date:
                 dates.append(published_date)
-            
+
             # 添加媒体信息（如果有）
             if media_info_dict and source_name in media_info_dict:
                 source_item['media_info'] = media_info_dict[source_name]

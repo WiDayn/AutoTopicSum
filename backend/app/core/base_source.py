@@ -12,6 +12,7 @@ class NewsArticle:
         title: str,
         url: str,
         source: str,
+        filter: bool,
         published_at: Optional[datetime] = None,
         summary: Optional[str] = None,
         content: Optional[str] = None,
@@ -22,6 +23,7 @@ class NewsArticle:
         self.title = title
         self.url = url
         self.source = source
+        self.filter = filter
         self.published_at = published_at or datetime.now()
         self.summary = summary or ""
         self.content = content or ""
@@ -35,6 +37,7 @@ class NewsArticle:
             'title': self.title,
             'url': self.url,
             'source': self.source,
+            'filter': self.filter,
             'published_at': self.published_at.isoformat() if self.published_at else None,
             'summary': self.summary,
             'content': self.content,
