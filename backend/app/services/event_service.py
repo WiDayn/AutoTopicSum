@@ -1,5 +1,5 @@
 """事件服务 - 处理新闻聚合和事件生成"""
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 from collections import defaultdict
 import hashlib
@@ -17,6 +17,9 @@ from app.core.task_queue import task_queue, TaskStatus
 from app.sources.google_news import GoogleNewsSource
 from app.core.beat_encoder import beat_encoder
 from config import Config
+
+# 新增情感分析导入
+from app.services.sentiment_service import sentiment_analyzer
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +137,7 @@ class EventService:
         region = params.get('region', 'CN')
         
         # 阶段1: 从数据源搜索
-        update_progress(0, 100, '步骤1/3: 开始搜索新闻...')
+        update_progress(0, 100, '步骤1/4: 开始搜索新闻...')
         
         results = aggregator.search_all(
             query,
@@ -143,15 +146,19 @@ class EventService:
         )
         
         # 阶段2: 聚合结果
-        update_progress(33, 100, '步骤2/3: 正在聚合结果...')
+        update_progress(25, 100, '步骤2/4: 正在聚合结果...')
         aggregated_articles = aggregator.aggregate_results(results)
         
-        # 阶段3: 分析媒体来源
-        update_progress(66, 100, '步骤3/3: 正在分析媒体来源...')
-        media_info_dict = self._analyze_sources(aggregated_articles, update_progress)
+        # 阶段3: 情感分析
+        update_progress(50, 100, '步骤3/4: 正在进行情感分析...')
+        articles_with_sentiment = self._analyze_articles_sentiment(aggregated_articles, update_progress)
+        
+        # 阶段4: 分析媒体来源
+        update_progress(75, 100, '步骤4/4: 正在分析媒体来源...')
+        media_info_dict = self._analyze_sources(articles_with_sentiment, update_progress)
         
         # 生成事件
-        event = self._create_event_from_articles(query, aggregated_articles, media_info_dict)
+        event = self._create_event_from_articles(query, articles_with_sentiment, media_info_dict)
         event['status'] = 'completed'
         event['progress'] = {
             'current': 100,
@@ -164,9 +171,143 @@ class EventService:
         
         return {
             'event_id': event['id'],
-            'article_count': len(aggregated_articles),
+            'article_count': len(articles_with_sentiment),
             'source_count': len(results),
             'media_analyzed': len(media_info_dict)
+        }
+    
+    def _analyze_articles_sentiment(self, articles: List[Dict], update_progress=None) -> List[Dict]:
+        """
+        批量分析文章情感（使用线程池并发处理）
+        
+        Args:
+            articles: 文章列表
+            update_progress: 进度更新函数
+            
+        Returns:
+            包含情感分析结果的文章列表
+        """
+        if not articles:
+            return articles
+        
+        logger.info(f"开始对 {len(articles)} 篇文章进行情感分析")
+        
+        # 使用线程池并发处理情感分析
+        articles_with_sentiment = []
+        total_articles = len(articles)
+        completed_count = 0
+        
+        # 创建锁用于线程安全的计数和进度更新
+        lock = threading.Lock()
+        
+        def analyze_single_article(article):
+            """分析单篇文章情感的辅助函数"""
+            nonlocal completed_count
+            
+            try:
+                # 组合标题和内容进行情感分析
+                text = f"{article.get('title', '')} {article.get('content', '')}"
+                sentiment_result = sentiment_analyzer.analyze_text(text)
+                
+                # 将情感分析结果添加到文章对象中
+                article_with_sentiment = article.copy()
+                article_with_sentiment['sentiment_analysis'] = sentiment_result
+                
+                # 线程安全的更新进度
+                with lock:
+                    completed_count += 1
+                    articles_with_sentiment.append(article_with_sentiment)
+                    
+                    # 更新进度
+                    if update_progress:
+                        # 计算情感分析阶段的进度 (50-75之间)
+                        sentiment_progress = 50 + int((completed_count / total_articles) * 25)
+                        update_progress(
+                            sentiment_progress,
+                            100,
+                            f'步骤3/4: 正在进行情感分析 ({completed_count}/{total_articles})'
+                        )
+                
+                return article_with_sentiment
+                
+            except Exception as e:
+                logger.error(f"分析文章情感失败: {str(e)}")
+                # 如果分析失败，返回原始文章
+                return article
+        
+        # 使用线程池并发处理，最大5个线程（避免过多请求）
+        max_workers = min(5, total_articles)
+        logger.info(f"使用 {max_workers} 个线程并发分析文章情感")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # 提交所有任务
+            future_to_article = {
+                executor.submit(analyze_single_article, article): article 
+                for article in articles
+            }
+            
+            # 等待所有任务完成
+            for future in as_completed(future_to_article):
+                article = future_to_article[future]
+                try:
+                    future.result()  # 获取结果，会抛出任何异常
+                except Exception as e:
+                    logger.error(f"分析文章情感时出错: {str(e)}")
+        
+        # 计算情感统计
+        sentiment_stats = self._calculate_sentiment_stats(articles_with_sentiment)
+        logger.info(f"情感分析完成: {sentiment_stats}")
+        
+        return articles_with_sentiment
+    
+    def _calculate_sentiment_stats(self, articles: List[Dict]) -> Dict[str, Any]:
+        """
+        计算情感分析统计
+        
+        Args:
+            articles: 包含情感分析结果的文章列表
+            
+        Returns:
+            情感统计字典
+        """
+        sentiment_count = {
+            'positive': 0,
+            'neutral': 0,
+            'negative': 0
+        }
+        
+        total_confidence = 0
+        valid_articles = 0
+        
+        for article in articles:
+            sentiment_analysis = article.get('sentiment_analysis')
+            if sentiment_analysis:
+                sentiment = sentiment_analysis.get('sentiment')
+                confidence = sentiment_analysis.get('confidence', 0)
+                
+                if sentiment in sentiment_count:
+                    sentiment_count[sentiment] += 1
+                    total_confidence += confidence
+                    valid_articles += 1
+        
+        # 计算百分比
+        total_with_sentiment = sum(sentiment_count.values())
+        if total_with_sentiment > 0:
+            sentiment_percentages = {
+                sentiment: (count / total_with_sentiment) * 100
+                for sentiment, count in sentiment_count.items()
+            }
+        else:
+            sentiment_percentages = {sentiment: 0 for sentiment in sentiment_count.keys()}
+        
+        # 计算平均置信度
+        avg_confidence = total_confidence / valid_articles if valid_articles > 0 else 0
+        
+        return {
+            'counts': sentiment_count,
+            'percentages': sentiment_percentages,
+            'average_confidence': round(avg_confidence, 3),
+            'total_analyzed': valid_articles
         }
     
     def _create_event_from_articles(
@@ -202,7 +343,9 @@ class EventService:
                 'title': article.get('title', ''),
                 'url': article.get('url', ''),
                 'source': source_name,
-                'published_at': article.get('published_at', '')
+                'published_at': article.get('published_at', ''),
+                # 添加情感分析结果
+                'sentiment_analysis': article.get('sentiment_analysis', {})
             }
             
             # 添加媒体信息（如果有）
@@ -222,6 +365,9 @@ class EventService:
         ]
         latest_date = max(dates) if dates else datetime.now().isoformat()
         
+        # 计算情感统计
+        sentiment_stats = self._calculate_sentiment_stats(articles)
+        
         event = {
             'id': event_id,
             'title': f'关于"{query}"的新闻聚合',
@@ -233,6 +379,7 @@ class EventService:
             'sources': sources,
             'tags': tags,
             'created_at': datetime.now().isoformat(),
+            'sentiment_analysis': sentiment_stats,  # 新增情感分析统计
             'media_analysis': {
                 'total_media': len(media_info_dict) if media_info_dict else 0,
                 'media_info': media_info_dict if media_info_dict else {}
@@ -546,12 +693,12 @@ class EventService:
                 
                 # 更新进度
                 if update_progress:
-                    # 计算媒体分析阶段的进度 (66-100之间)
-                    media_progress = 66 + int((completed_count / total_sources) * 34)
+                    # 计算媒体分析阶段的进度 (75-100之间)
+                    media_progress = 75 + int((completed_count / total_sources) * 25)
                     update_progress(
                         media_progress,
                         100,
-                        f'步骤3/3: 正在分析媒体来源 ({completed_count}/{total_sources})'
+                        f'步骤4/4: 正在分析媒体来源 ({completed_count}/{total_sources})'
                     )
             
             # 如果是新分析的媒体，立即保存到文件（防止中断导致数据丢失）
@@ -655,4 +802,3 @@ class EventService:
 
 # 全局服务实例
 event_service = EventService()
-

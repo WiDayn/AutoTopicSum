@@ -16,6 +16,12 @@ const routes = [
     path: '/beat-encoding',
     name: 'beat-encoding',
     component: () => import('@/views/BeatEncodingView.vue')
+  },
+  // 新增情感分析路由
+  {
+    path: '/sentiment',
+    name: 'sentiment-analysis',
+    component: () => import('@/views/SentimentAnalysis.vue')
   }
 ]
 
@@ -25,4 +31,3 @@ const router = createRouter({
 })
 
 export default router
-

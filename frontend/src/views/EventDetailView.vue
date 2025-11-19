@@ -35,6 +35,37 @@
           </div>
         </div>
 
+        <!-- 情感分析概览 -->
+        <Card v-if="event.sentiment_analysis" class="p-6">
+          <h2 class="text-xl font-semibold mb-4">情感分析概览</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="sentiment-stat positive text-center p-4 rounded-lg">
+              <div class="stat-value text-3xl font-bold">{{ event.sentiment_analysis.counts.positive || 0 }}</div>
+              <div class="stat-label">积极新闻</div>
+              <div class="stat-percentage text-lg font-semibold">
+                {{ (event.sentiment_analysis.percentages?.positive || 0).toFixed(1) }}%
+              </div>
+            </div>
+            <div class="sentiment-stat neutral text-center p-4 rounded-lg">
+              <div class="stat-value text-3xl font-bold">{{ event.sentiment_analysis.counts.neutral || 0 }}</div>
+              <div class="stat-label">中性新闻</div>
+              <div class="stat-percentage text-lg font-semibold">
+                {{ (event.sentiment_analysis.percentages?.neutral || 0).toFixed(1) }}%
+              </div>
+            </div>
+            <div class="sentiment-stat negative text-center p-4 rounded-lg">
+              <div class="stat-value text-3xl font-bold">{{ event.sentiment_analysis.counts.negative || 0 }}</div>
+              <div class="stat-label">负面新闻</div>
+              <div class="stat-percentage text-lg font-semibold">
+                {{ (event.sentiment_analysis.percentages?.negative || 0).toFixed(1) }}%
+              </div>
+            </div>
+          </div>
+          <div v-if="event.sentiment_analysis.average_confidence" class="text-center text-muted-foreground">
+            平均置信度: {{ (event.sentiment_analysis.average_confidence * 100).toFixed(1) }}%
+          </div>
+        </Card>
+
         <!-- 摘要 -->
         <Card class="p-6">
           <h2 class="text-xl font-semibold mb-3">事件摘要</h2>
@@ -130,18 +161,84 @@
               class="border-l-2 border-primary pl-4 py-2 space-y-3"
             >
               <!-- 文章标题和链接 -->
-              <div>
-                <a
-                  :href="source.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-primary hover:underline font-medium text-lg"
-                >
-                  {{ source.title }}
-                </a>
-                <p class="text-sm text-muted-foreground mt-1">
-                  来源：{{ source.source }} • {{ formatDate(source.published_at) }}
-                </p>
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <a
+                    :href="source.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-primary hover:underline font-medium text-lg"
+                  >
+                    {{ source.title }}
+                  </a>
+                  <p class="text-sm text-muted-foreground mt-1">
+                    来源：{{ source.source }} • {{ formatDate(source.published_at) }}
+                  </p>
+                </div>
+                
+                <!-- 情感标签 -->
+                <div class="sentiment-tag ml-4" v-if="source.sentiment_analysis">
+                  <Badge 
+                    :variant="getSentimentBadgeVariant(source.sentiment_analysis.sentiment)"
+                    class="text-xs font-semibold"
+                  >
+                    {{ getSentimentLabel(source.sentiment_analysis.sentiment) }}
+                    ({{ (source.sentiment_analysis.confidence * 100).toFixed(0) }}%)
+                  </Badge>
+                </div>
+              </div>
+
+              <!-- 情感分析详情 -->
+              <div v-if="source.sentiment_analysis" class="bg-secondary/30 rounded-lg p-4 space-y-3">
+                <h4 class="text-sm font-semibold text-muted-foreground mb-2">情感分析</h4>
+                
+                <!-- 情感分数进度条 -->
+                <div class="space-y-2">
+                  <div class="score-item flex items-center">
+                    <span class="score-label text-xs text-muted-foreground min-w-[40px]">积极:</span>
+                    <div class="score-bar flex-1 mx-2">
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          class="bg-green-500 h-2 rounded-full" 
+                          :style="{ width: (source.sentiment_analysis.scores.positive * 100) + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                    <span class="score-value text-xs font-medium min-w-[40px] text-right">
+                      {{ (source.sentiment_analysis.scores.positive * 100).toFixed(1) }}%
+                    </span>
+                  </div>
+                  
+                  <div class="score-item flex items-center">
+                    <span class="score-label text-xs text-muted-foreground min-w-[40px]">中性:</span>
+                    <div class="score-bar flex-1 mx-2">
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          class="bg-yellow-500 h-2 rounded-full" 
+                          :style="{ width: (source.sentiment_analysis.scores.neutral * 100) + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                    <span class="score-value text-xs font-medium min-w-[40px] text-right">
+                      {{ (source.sentiment_analysis.scores.neutral * 100).toFixed(1) }}%
+                    </span>
+                  </div>
+                  
+                  <div class="score-item flex items-center">
+                    <span class="score-label text-xs text-muted-foreground min-w-[40px]">负面:</span>
+                    <div class="score-bar flex-1 mx-2">
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          class="bg-red-500 h-2 rounded-full" 
+                          :style="{ width: (source.sentiment_analysis.scores.negative * 100) + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                    <span class="score-value text-xs font-medium min-w-[40px] text-right">
+                      {{ (source.sentiment_analysis.scores.negative * 100).toFixed(1) }}%
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <!-- 媒体信息 -->
@@ -281,6 +378,26 @@ const formatDate = (dateStr) => {
   }
 }
 
+// 获取情感标签类型
+const getSentimentBadgeVariant = (sentiment) => {
+  const variants = {
+    positive: 'default',
+    neutral: 'secondary', 
+    negative: 'destructive'
+  }
+  return variants[sentiment] || 'outline'
+}
+
+// 获取情感标签文本
+const getSentimentLabel = (sentiment) => {
+  const labels = {
+    positive: '积极',
+    neutral: '中性',
+    negative: '负面'
+  }
+  return labels[sentiment] || '未知'
+}
+
 // 获取事件详情
 const fetchEventDetail = async () => {
   loading.value = true
@@ -303,3 +420,53 @@ onMounted(() => {
 })
 </script>
 
+<style scoped>
+.sentiment-stat {
+  color: white;
+  font-weight: bold;
+}
+
+.sentiment-stat.positive {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.sentiment-stat.neutral {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.sentiment-stat.negative {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+}
+
+.stat-value {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.stat-percentage {
+  font-size: 1.125rem;
+}
+
+.score-item {
+  margin-bottom: 0.5rem;
+}
+
+.score-label {
+  min-width: 40px;
+}
+
+.score-bar {
+  margin: 0 0.5rem;
+}
+
+.score-value {
+  min-width: 40px;
+  text-align: right;
+}
+</style>
