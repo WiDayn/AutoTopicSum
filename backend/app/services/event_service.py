@@ -15,7 +15,8 @@ import threading
 from app.core.aggregator import aggregator
 from app.core.task_queue import task_queue, TaskStatus
 from app.sources.google_news import GoogleNewsSource
-from app.core.beat_encoder import beat_encoder
+from app.core.bert_encoder import bert_encoder
+from app.core.timeline_generator import get_timeline_generator
 from config import Config
 
 # 新增情感分析导入
@@ -39,7 +40,7 @@ class EventService:
         self.cache_lock = threading.Lock()
         # 加载持久化的媒体缓存
         self._load_media_cache()
-    
+
     def _init_sources(self):
         """初始化数据源"""
         # 注册Google News数据源
@@ -122,7 +123,7 @@ class EventService:
                 'data': None,
                 'message': f'提交失败: {str(e)}'
             }
-    
+
     def _handle_search_task(self, task, update_progress):
         """
         处理搜索任务
@@ -135,33 +136,61 @@ class EventService:
         query = params['query']
         language = params.get('language', 'zh-CN')
         region = params.get('region', 'CN')
-        
+
+        curr_prog, curr_step = 0, 1
+        total_step = 5
+        prog_of_single_step = int(100. / total_step)
+
         # 阶段1: 从数据源搜索
-        update_progress(0, 100, '步骤1/4: 开始搜索新闻...')
-        
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 开始搜索新闻...')
         results = aggregator.search_all(
             query,
             language=language,
             region=region
         )
-        
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
         # 阶段2: 聚合结果
-        update_progress(25, 100, '步骤2/4: 正在聚合结果...')
+        event = self._create_event_from_articles(query, articles_with_sentiment, media_info_dict)
+        update_progress(curr_prog, 100, '步骤2/3: 正在聚合结果...')
+        aggregated_articles = aggregator.aggregate_results(query, results)
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在聚合结果...')
         aggregated_articles = aggregator.aggregate_results(results)
-        
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
         # 阶段3: 情感分析
-        update_progress(50, 100, '步骤3/4: 正在进行情感分析...')
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在进行情感分析...')
         articles_with_sentiment = self._analyze_articles_sentiment(aggregated_articles, update_progress)
-        
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
         # 阶段4: 分析媒体来源
-        update_progress(75, 100, '步骤4/4: 正在分析媒体来源...')
-        media_info_dict = self._analyze_sources(articles_with_sentiment, update_progress)
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在分析媒体来源...')
+        media_info_dict = self._analyze_sources(aggregated_articles, update_progress, curr_step, total_step)
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
+        # 阶段5：生成时间线
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在生成时间线...')
+        timeline_nodes = self._generate_timeline(task.task_id, aggregated_articles)
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
+        if curr_step == total_step:
+            curr_prog = 100
         
         # 生成事件
-        event = self._create_event_from_articles(query, articles_with_sentiment, media_info_dict)
+        event = self._create_event_from_articles(
+            query,
+            aggregated_articles,
+            media_info_dict,
+            timeline_nodes,
+        )
         event['status'] = 'completed'
         event['progress'] = {
-            'current': 100,
+            'current': curr_prog,
             'total': 100,
             'message': '完成'
         }
@@ -173,7 +202,8 @@ class EventService:
             'event_id': event['id'],
             'article_count': len(articles_with_sentiment),
             'source_count': len(results),
-            'media_analyzed': len(media_info_dict)
+            'media_analyzed': len(media_info_dict),
+            'timeline': len(timeline_nodes),
         }
     
     def _analyze_articles_sentiment(self, articles: List[Dict], update_progress=None) -> List[Dict]:
@@ -314,7 +344,8 @@ class EventService:
         self,
         query: str,
         articles: List[Dict],
-        media_info_dict: Optional[Dict[str, Dict]] = None
+        media_info_dict: Optional[Dict[str, Dict]] = None,
+        timeline_nodes=None
     ) -> Dict:
         """
         从文章列表创建事件
@@ -323,7 +354,8 @@ class EventService:
             query: 搜索关键词
             articles: 文章列表
             media_info_dict: 媒体信息字典（可选）
-            
+            timeline_nodes: 时间线dict
+
         Returns:
             事件对象
         """
@@ -337,8 +369,10 @@ class EventService:
         
         # 提取所有来源，并关联媒体信息
         sources = []
+        dates = []
         for article in articles:
             source_name = article.get('source', '')
+            published_date = article.get('published_at', '')
             source_item = {
                 'title': article.get('title', ''),
                 'url': article.get('url', ''),
@@ -347,7 +381,10 @@ class EventService:
                 # 添加情感分析结果
                 'sentiment_analysis': article.get('sentiment_analysis', {})
             }
-            
+
+            if published_date:
+                dates.append(published_date)
+
             # 添加媒体信息（如果有）
             if media_info_dict and source_name in media_info_dict:
                 source_item['media_info'] = media_info_dict[source_name]
@@ -358,11 +395,6 @@ class EventService:
         tags = self._extract_tags(articles)
         
         # 计算日期范围
-        dates = [
-            article.get('published_at', '')
-            for article in articles
-            if article.get('published_at')
-        ]
         latest_date = max(dates) if dates else datetime.now().isoformat()
         
         # 计算情感统计
@@ -383,7 +415,8 @@ class EventService:
             'media_analysis': {
                 'total_media': len(media_info_dict) if media_info_dict else 0,
                 'media_info': media_info_dict if media_info_dict else {}
-            }
+            },
+            'timeline': timeline_nodes,
         }
         
         return event
@@ -572,9 +605,9 @@ class EventService:
             # 解析返回的内容
             media_info = self._parse_media_info(content, media_name)
             
-            # 使用BEAT编码器聚合相似关键词
+            # 使用BERT编码器聚合相似关键词
             if media_info:
-                media_info = beat_encoder.encode_media_info(media_info)
+                media_info = bert_encoder.encode_media_info(media_info)
                 logger.debug(f"媒体 {media_name} 的关键词已编码")
             
             # 缓存结果（线程安全）
@@ -637,7 +670,7 @@ class EventService:
             logger.error(f"解析媒体信息失败: {str(e)}")
             return media_info
     
-    def _analyze_sources(self, articles: List[Dict], update_progress=None) -> Dict[str, Dict]:
+    def _analyze_sources(self, articles: List[Dict], update_progress=None, curr_step=None, total_step=None) -> Dict[str, Dict]:
         """
         分析所有文章的媒体来源（使用线程池并发处理）
         
@@ -692,13 +725,16 @@ class EventService:
                         is_new_media = True
                 
                 # 更新进度
-                if update_progress:
-                    # 计算媒体分析阶段的进度 (75-100之间)
-                    media_progress = 75 + int((completed_count / total_sources) * 25)
+                if update_progress and curr_step is not None and total_step is not None:
+                    # 计算媒体分析阶段的进度
+                    prog_of_single_step = 100. / total_step
+                    curr_prog = int(prog_of_single_step * (curr_step - 1))
+
+                    media_progress = curr_prog + int((completed_count / total_sources) * prog_of_single_step)
                     update_progress(
                         media_progress,
                         100,
-                        f'步骤4/4: 正在分析媒体来源 ({completed_count}/{total_sources})'
+                        f'步骤{curr_step}/{total_step}: 正在分析媒体来源 ({completed_count}/{total_sources})'
                     )
             
             # 如果是新分析的媒体，立即保存到文件（防止中断导致数据丢失）
@@ -753,8 +789,8 @@ class EventService:
                 with open(cache_file, 'r', encoding='utf-8') as f:
                     raw_cache = json.load(f)
                 
-                # 使用BEAT编码器对加载的缓存进行编码（确保一致性）
-                self.media_info_cache = beat_encoder.batch_encode(raw_cache)
+                # 使用BERT编码器对加载的缓存进行编码（确保一致性）
+                self.media_info_cache = bert_encoder.batch_encode_media(raw_cache)
                 
                 # 如果编码后有变化，保存更新后的缓存
                 if raw_cache != self.media_info_cache:
@@ -788,8 +824,8 @@ class EventService:
             with self.cache_lock:
                 cache_data = dict(self.media_info_cache)  # 复制一份避免长时间持有锁
             
-            # 使用BEAT编码器对所有媒体信息进行编码
-            encoded_cache_data = beat_encoder.batch_encode(cache_data)
+            # 使用BERT编码器对所有媒体信息进行编码
+            encoded_cache_data = bert_encoder.batch_encode_media(cache_data)
             
             with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump(encoded_cache_data, f, ensure_ascii=False, indent=2)
@@ -798,6 +834,11 @@ class EventService:
             
         except Exception as e:
             logger.error(f"保存媒体缓存失败: {str(e)}")
+
+    def _generate_timeline(self, task_id, articles: List[Dict]):
+        timeline_generator = get_timeline_generator()
+        timeline_nodes = timeline_generator.generate_timeline(task_id, articles)
+        return timeline_nodes
 
 
 # 全局服务实例

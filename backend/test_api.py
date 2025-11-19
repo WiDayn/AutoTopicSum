@@ -2,6 +2,7 @@
 import requests
 import json
 import time
+import pprint
 
 BASE_URL = "http://localhost:5001/api"
 
@@ -92,6 +93,124 @@ def test_get_event_detail(event_id):
         print(f"错误响应: {response.text}")
 
 
+def run_e2e_test(single_test_query):
+    if not single_test_query:
+        print('!!! 错误: 请检查single_test_query')
+        return
+
+    poll_interval_secs = 3  # 每3秒轮询一次
+    task_timeout_secs = 300  # 超时时间
+
+    print(f'--- 步骤 1: 提交搜索任务: "{single_test_query}" ---')
+    try:
+        response = requests.post(
+            f'{BASE_URL}/events/search',
+            json={'query': single_test_query}
+        )
+        response.raise_for_status()  
+        
+        submit_data = response.json()
+        
+        if not submit_data.get('success'):
+            print(f'!!! 错误: 提交任务失败: {submit_data.get("message")}')
+            return
+
+        task_id = submit_data.get('data', {}).get('task_id')
+        event_id = submit_data.get('data', {}).get('event_id')
+
+        if not task_id or not event_id:
+            print('!!! 错误: 提交响应中未找到 task_id 或 event_id')
+            return
+            
+        print(f'任务已成功提交。')
+        print(f'  Task ID:  {task_id}')
+        print(f'  Event ID: {event_id}')
+
+    except requests.exceptions.ConnectionError:
+        print(f'!!! 错误: 无法连接到 {BASE_URL}')
+        return
+    except requests.exceptions.RequestException as e:
+        print(f'!!! 错误: 提交任务时发生异常: {e}')
+        return
+
+    print(f'\n--- 步骤 2: 轮询任务状态 (每 {poll_interval_secs} 秒一次) ---')
+    start_time = time.time()
+
+    while True:
+        # 检查是否超时
+        if time.time() - start_time > task_timeout_secs:
+            print(f'!!! 错误: 任务超时 (超过 {task_timeout_secs} 秒)')
+            return
+
+        try:
+            task_response = requests.get(f'{BASE_URL}/tasks/{task_id}')
+            task_data = task_response.json()
+
+            if not task_data.get('success'):
+                print(f'警告: 获取任务状态失败: {task_data.get("message")}, 3秒后重试...')
+                time.sleep(poll_interval_secs)
+                continue
+            
+            status = task_data.get('data', {}).get('status')
+            progress = task_data.get('data', {}).get('progress', {})
+            message = progress.get('message', '...')
+            
+            if status == 'completed':
+                print('任务完成! ')
+                break
+            elif status == 'failed':
+                print(f'!!! 错误: 任务执行失败! 详情: {task_data.get("data", {}).get("error")}')
+                return
+            else: 
+                # 状态为 processing 或 submitted
+                current = progress.get('current', 0)
+                total = progress.get('total', 100)
+                percent = (current / total) * 100 if total > 0 else 0
+                print(f'状态: {status} ({percent:.0f}%) - {message}')
+                time.sleep(poll_interval_secs)
+        
+        except requests.exceptions.RequestException as e:
+            print(f'轮询时出错: {e}, 3秒后重试...')
+            time.sleep(poll_interval_secs)
+
+    print(f'\n--- 步骤 3: 获取最终事件详情 (Event ID: {event_id}) ---')
+    try:
+        event_response = requests.get(f'{BASE_URL}/events/{event_id}')
+        event_response.raise_for_status()
+        event_data_wrapper = event_response.json()
+
+        if not event_data_wrapper.get('success'):
+            print(f'!!! 错误: 获取事件详情失败: {event_data_wrapper.get("message")}')
+            return
+        
+        event_data = event_data_wrapper.get('data', {})
+        
+        print('成功获取事件，详情如下:')
+        pprint.pp(event_data, depth=2, compact=True)
+
+        print('\n--- 步骤 4: 验证 Timeline 结果 ---')
+
+        if 'timeline' not in event_data:
+            print('\n!!! 失败: timeline 字段不存在于最终的 event 数据中!')
+            print('请检查 _create_event_from_articles 和 _handle_search_task 方法。')
+        
+        elif not isinstance(event_data['timeline'], list):
+            print(f'\n!!! 失败: timeline 字段不是一个列表 (List), 而是 {type(event_data["timeline"])}')
+        
+        elif len(event_data['timeline']) == 0:
+            print('\n--- 注意: timeline 字段是一个空列表 []')
+
+        else:
+            timeline_len = len(event_data['timeline'])
+            print(f'\n=== 成功! timeline 字段已成功生成! ===')
+            print(f'    共包含 {timeline_len} 个关键事件节点。')
+            print('    第一个节点示例:')
+            pprint.pp(event_data['timeline'][0], depth=2, compact=True)
+
+    except requests.exceptions.RequestException as e:
+        print(f'!!! 错误: 获取最终事件时发生异常: {e}')
+
+
 def main():
     """主函数"""
     print("=" * 60)
@@ -103,10 +222,11 @@ def main():
         test_health()
         
         # 2. 测试搜索功能
-        test_queries = ["人工智能", "气候变化"]
-        for query in test_queries:
-            test_search(query)
-            time.sleep(2)  # 避免请求过快
+        # test_queries = ["人工智能", "气候变化"]
+        # for query in test_queries:
+        #     test_search(query)
+        #     time.sleep(2)  # 避免请求过快
+        run_e2e_test('人工智能')
         
         # 3. 测试获取事件列表
         time.sleep(1)
@@ -125,4 +245,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

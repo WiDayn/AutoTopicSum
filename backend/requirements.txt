@@ -12,3 +12,6 @@ numpy
 scikit-learn
 sentence-transformers
 jieba==0.42.1
+nltk
+jieba
+langdetect

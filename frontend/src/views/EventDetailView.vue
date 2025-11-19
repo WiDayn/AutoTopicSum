@@ -146,6 +146,31 @@
           </div>
         </Card>
 
+        <!-- 时间线 -->
+        <Card class="p-6">
+          <div 
+            class="flex items-center justify-between cursor-pointer"
+            @click="showTimeline = !showTimeline"
+          >
+            <h2 class="text-xl font-semibold">
+              时间线
+            </h2>
+            <Button variant="ghost" size="sm">
+              <ChevronDown 
+                class="h-5 w-5 transition-transform duration-200"
+                :class="{ 'rotate-180': showTimeline }"
+              />
+            </Button>
+          </div>
+          <ol v-show="showTimeline" class="relative border-s border-default ml-3 mt-5 pl-3">
+            <EventTimelineNode
+              v-for="node in event.timeline"
+              :key="node.timestamp"
+              :node="node"
+            />
+          </ol>
+        </Card>
+
         <!-- 来源文章 -->
         <Card class="p-6">
           <h2 class="text-xl font-semibold mb-4">
@@ -239,6 +264,21 @@
                     </span>
                   </div>
                 </div>
+              <div>
+                <a
+                  :href="source.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-primary hover:underline font-medium text-lg"
+                >
+                  {{ source.title }}
+                </a>
+                <p class="text-sm text-muted-foreground mt-1">
+                  来源：{{ source.source }} • {{ formatDate(source.published_at) }}
+                </p>
+                <p class="text-sm mt-1" :class="source.filter ? 'text-red-500' : 'text-green-500'">
+                  是否被过滤：{{ source.filter ? '是' : '否' }}
+                </p>
               </div>
 
               <!-- 媒体信息 -->
@@ -341,6 +381,7 @@ import { ArrowLeft, Calendar, ChevronDown } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
+import EventTimelineNode from '@/components/EventTimelineNode.vue'
 import { getEventDetail } from '@/api/events'
 
 const router = useRouter()
@@ -349,6 +390,7 @@ const route = useRoute()
 const loading = ref(false)
 const event = ref(null)
 const showMediaOverview = ref(false)  // 默认折叠状态
+const showTimeline = ref(false)
 
 // 返回上一页
 const goBack = () => {

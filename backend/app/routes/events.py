@@ -2,7 +2,7 @@
 from flask import jsonify, request
 from app.routes import api_bp
 from app.services.event_service import event_service
-from app.core.beat_encoder import beat_encoder
+from app.core.bert_encoder import bert_encoder
 
 
 @api_bp.route('/events/search', methods=['POST'])
@@ -82,7 +82,7 @@ def get_event_detail(event_id):
             return jsonify({
                 'success': False,
                 'data': None,
-                'message': '事件不存在'
+                'message': f'{event_id} 事件不存在'
             }), 404
         
         return jsonify({
@@ -137,14 +137,14 @@ def health_check():
     })
 
 
-@api_bp.route('/beat/encoding-record', methods=['GET'])
-def get_beat_encoding_record():
+@api_bp.route('/bert/encoding-record', methods=['GET'])
+def get_bert_encoding_record():
     """
-    获取BEAT编码器记录接口
+    获取BERT编码器记录接口
     返回编码映射和最后一次聚类的统计信息
     """
     try:
-        record = beat_encoder.get_encoding_record()
+        record = bert_encoder.get_encoding_record()
         
         return jsonify({
             'success': True,

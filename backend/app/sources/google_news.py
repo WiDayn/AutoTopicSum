@@ -11,9 +11,6 @@ from urllib.parse import urljoin, quote
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 from app.core.base_source import BaseNewsSource, NewsArticle
@@ -389,6 +386,7 @@ class GoogleNewsSource(BaseNewsSource):
                 title=title,
                 url=url,
                 source=source or 'Google News',
+                filter=True,
                 published_at=published_at,
                 summary=summary
             )
