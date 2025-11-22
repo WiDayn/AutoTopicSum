@@ -198,6 +198,14 @@
                   </a>
                   <p class="text-sm text-muted-foreground mt-1">
                     来源：{{ source.source }} • {{ formatDate(source.published_at) }}
+                    <span v-if="source.filter !== undefined" class="ml-2">
+                      <Badge 
+                        :variant="source.filter ? 'destructive' : 'default'"
+                        class="text-xs"
+                      >
+                        {{ source.filter ? '已过滤' : '通过' }}
+                      </Badge>
+                    </span>
                   </p>
                 </div>
                 
@@ -264,21 +272,6 @@
                     </span>
                   </div>
                 </div>
-              <div>
-                <a
-                  :href="source.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-primary hover:underline font-medium text-lg"
-                >
-                  {{ source.title }}
-                </a>
-                <p class="text-sm text-muted-foreground mt-1">
-                  来源：{{ source.source }} • {{ formatDate(source.published_at) }}
-                </p>
-                <p class="text-sm mt-1" :class="source.filter ? 'text-red-500' : 'text-green-500'">
-                  是否被过滤：{{ source.filter ? '是' : '否' }}
-                </p>
               </div>
 
               <!-- 媒体信息 -->

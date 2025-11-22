@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import SentimentAnalysis from '@/components/beat/SentimentAnalysis.vue'
+import SentimentAnalysis from '@/components/bert/SentimentAnalysis.vue'
 </script>
 
 <style scoped>

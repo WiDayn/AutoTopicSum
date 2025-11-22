@@ -152,11 +152,8 @@ class EventService:
         curr_step += 1
 
         # 阶段2: 聚合结果
-        event = self._create_event_from_articles(query, articles_with_sentiment, media_info_dict)
-        update_progress(curr_prog, 100, '步骤2/3: 正在聚合结果...')
-        aggregated_articles = aggregator.aggregate_results(query, results)
         update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在聚合结果...')
-        aggregated_articles = aggregator.aggregate_results(results)
+        aggregated_articles = aggregator.aggregate_results(query, results)
         curr_prog += prog_of_single_step
         curr_step += 1
 
@@ -184,7 +181,7 @@ class EventService:
         # 生成事件
         event = self._create_event_from_articles(
             query,
-            aggregated_articles,
+            articles_with_sentiment,
             media_info_dict,
             timeline_nodes,
         )
@@ -379,7 +376,9 @@ class EventService:
                 'source': source_name,
                 'published_at': article.get('published_at', ''),
                 # 添加情感分析结果
-                'sentiment_analysis': article.get('sentiment_analysis', {})
+                'sentiment_analysis': article.get('sentiment_analysis', {}),
+                # 添加过滤状态
+                'filter': article.get('filter', False)
             }
 
             if published_date:
