@@ -827,6 +827,14 @@ class BERTEncoder:
             embeddings = semantic_model.encode(docs, normalize_embeddings=True, convert_to_numpy=True)
         return embeddings
 
+    def simple_encode(self, doc, *args, **kwargs):
+        semantic_model = self._get_semantic_model()
+        if semantic_model is None:
+            embedding = np.random.rand(10, 10)
+        else:
+            embedding = semantic_model.encode(doc, *args, **kwargs)
+        return embedding
+
 
     def get_statistics(self, media_info_dict: Dict[str, Dict]) -> Dict:
         """

@@ -1,13 +1,13 @@
 import string
 import jieba
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
+from app.core.bert_encoder import bert_encoder
 
 
 class TextMatcher:
     def __init__(self):
         # 加载多语言预训练模型（支持中英混杂文本）
-        # 模型说明：https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-        self.model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        self.model = bert_encoder  # not a good practice, but use it for the moment
 
         # 通用停用词（中英文通用虚词/无意义词）
         self.stopwords = {
@@ -63,8 +63,8 @@ class TextMatcher:
         processed_titles = [title if title else "空文本" for title in processed_titles]
 
         # 3. 用多语言模型将文本转为语义向量
-        event_embedding = self.model.encode(processed_event, convert_to_tensor=True)
-        title_embeddings = self.model.encode(processed_titles, convert_to_tensor=True)
+        event_embedding = self.model.simple_encode(processed_event, convert_to_tensor=True)
+        title_embeddings = self.model.simple_encode(processed_titles, convert_to_tensor=True)
 
         # 4. 计算余弦相似度（语义层面的匹配，而非字面匹配）
         similarities = util.cos_sim(event_embedding, title_embeddings).flatten().tolist()
