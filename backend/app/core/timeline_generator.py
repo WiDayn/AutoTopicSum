@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import List, Dict, Optional
 from scipy.spatial.distance import cdist
 from app.core.bert_encoder import bert_encoder
-from sklearn.preprocessing import RobustScaler
+# from sklearn.preprocessing import RobustScaler
 from sklearn.cluster import AgglomerativeClustering, HDBSCAN
 
 import logging
@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 class TimelineGenerator:
 
-    DISTANCE_THRESHOLD = .6  # For clustering
+    DISTANCE_THRESHOLD = .55  # For clustering
     MEMBERS_IN_VALID_CLUSTER_THRESHOLD = 2  # Used by AgglomerativeClustering, filtering out clusters with fewer members than this number
-    TIME_WEIGHT = 0.7
+    TIME_WEIGHT = 0.0042
 
     def __init__(self, distance_threshold: Optional[float]=None, members_threshold: Optional[int]=None, time_weight: Optional[float]=None):
         self.distance_threshold = distance_threshold or self.DISTANCE_THRESHOLD
@@ -24,7 +24,7 @@ class TimelineGenerator:
         self.time_weight  = time_weight or self.TIME_WEIGHT
 
     def generate_timeline(self, task_id, articles: List[Dict]) -> List[Dict]:
-        """分析新闻文章列表，识别关键时间点和内容。"""
+        """Analyze a list of news articles to identify key events and generate a timeline."""
 
         # Each info contains title, time and summary of the article (if availible)
         articles_info = [
@@ -40,12 +40,25 @@ class TimelineGenerator:
         min_time = min(timestamps)
         # Convert each timestamp to hours since the reference point
         time_features = np.array([[(t - min_time).total_seconds() / 3600.] for t in timestamps]) # [N, 1]
-        time_scaler = RobustScaler()
-        time_features_scaled = time_scaler.fit_transform(time_features)
-        time_features_weighted = time_features_scaled * self.time_weight
+        # time_scaler = RobustScaler()
+        # time_features_scaled = time_scaler.fit_transform(time_features)
+        # time_features_weighted = time_features_scaled * self.time_weight
+        time_features_weighted = time_features * self.time_weight
         # -----
 
         X_final = np.concatenate([X_semantics, time_features_weighted], axis=1)  # [N, features_num+1]
+
+        # Test: euclidean distance matrix
+        # dist_matrix = cdist(X_final, X_final)  # [N, N]
+        # mean_dist = np.mean(dist_matrix)
+        # # calculate quartiles
+        # percentiles = np.percentile(dist_matrix, [25, 50, 75]).tolist()
+        # # logger.info(f'\n ======== Task{task_id}: Mean distance between articles: {mean_dist:.4f} ========')
+        # print(f'\n ======== Task{task_id}: Mean distance between articles: {mean_dist:.4f}, percentiles: {percentiles} ========')
+        # # Append the mean distance to a log file
+        # with open('./timeline_distance.log', 'a', encoding='utf-8') as f:
+        #     f.write(f'{mean_dist:.4f}, {percentiles}; ')
+        # Test end
 
         # Clustering
         # clusterer = AgglomerativeClustering(
@@ -81,7 +94,7 @@ class TimelineGenerator:
 
             # Find representative article of a cluster
             centroid = np.mean(info['e'], axis=0)  # (features_num,)
-            distances = cdist(np.atleast_2d(centroid), info['e'])  # (1, features_num), (members_num, features_num)
+            distances = cdist(centroid.reshape((1, -1)) , info['e'])  # (1, features_num), (members_num, features_num)
             representative_inner_index = np.argmin(distances)
             representative_index = info['i'][representative_inner_index]
             representative_article = articles[representative_index]
