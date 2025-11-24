@@ -1,213 +1,213 @@
 {
   "投资界": {
     "name": "投资界",
-    "ownership": "商业",
-    "funding": "广告/会员/个人付费",
-    "political_stance": "中立/亲商业",
+    "ownership": "公司",
+    "funding": "广告/会员/公资",
+    "political_stance": "中立/亲中",
     "content_domain": "投资",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "创业者/投资人",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "Apple": {
     "name": "Apple",
     "ownership": "民营",
     "funding": "股东",
     "political_stance": "中立/支持隐私保护与创新",
-    "content_domain": "数码/服务/新闻",
-    "location": "美国",
+    "content_domain": "AR/服务/新闻",
+    "location": "全国",
     "target_audience": "IT从业者/消费者",
     "category": "科技公司/企业传播"
   },
   "爱范儿": {
     "name": "爱范儿",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/会员/企业合作",
     "political_stance": "中立",
-    "content_domain": "数码/智能手机/电脑/智能家居/生活方式",
-    "location": "中国",
-    "target_audience": "IT从业者/消费者/年轻群体",
-    "category": "新闻媒体"
+    "content_domain": "AR/智能手机/电脑/智能家居/生活方式",
+    "location": "上海",
+    "target_audience": "IT从业者/消费者/大众用户",
+    "category": "公营媒体"
   },
   "动点科技": {
     "name": "动点科技",
     "ownership": "民营",
     "funding": "广告/企业合作",
     "political_stance": "中立/非政治化",
-    "content_domain": "数码/互联网/产业/投资",
-    "location": "中国",
+    "content_domain": "AR/互联网/产业/投资",
+    "location": "上海",
     "target_audience": "IT从业者/投资人",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "英为财情 Investing.com": {
     "name": "英为财情 Investing.com",
-    "ownership": "商业/独立媒体",
+    "ownership": "公司/官方媒体",
     "funding": "广告/会员/数据服务费",
-    "political_stance": "中立/亲商业",
+    "political_stance": "中立/亲中",
     "content_domain": "投资",
-    "location": "全球/美国",
+    "location": "全国",
     "target_audience": "投资人/交易员",
     "category": ""
   },
   "杭网议事厅": {
     "name": "杭网议事厅",
-    "ownership": "商业",
-    "funding": "政府拨款/广告",
-    "political_stance": "官方",
+    "ownership": "公司",
+    "funding": "政府/广告",
+    "political_stance": "国家",
     "content_domain": "时事/新闻",
-    "location": "中国",
-    "target_audience": "大众网民",
-    "category": "新闻媒体"
+    "location": "上海",
+    "target_audience": "大众用户",
+    "category": "公营媒体"
   },
   "证券时报": {
     "name": "证券时报",
-    "ownership": "中国/商业",
-    "funding": "政府拨款/广告",
-    "political_stance": "官方",
+    "ownership": "中国/公司",
+    "funding": "政府/广告",
+    "political_stance": "国家",
     "content_domain": "投资",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "投资人",
-    "category": "日报"
+    "category": "党报"
   },
   "新浪网": {
     "name": "新浪网",
     "ownership": "民营/个人",
     "funding": "广告/股东",
-    "political_stance": "官方/商业媒体",
+    "political_stance": "国家/商业媒体",
     "content_domain": "中关村",
-    "location": "中国",
-    "target_audience": "大众网民",
-    "category": "综合门户网站"
+    "location": "上海",
+    "target_audience": "大众用户",
+    "category": "评测网站"
   },
   "华尔街日报中文网": {
     "name": "华尔街日报中文网",
-    "ownership": "美国",
+    "ownership": "个人",
     "funding": "多元化/广告/企业合作",
     "political_stance": "保守派",
     "content_domain": "投资/新闻",
-    "location": "美国",
-    "target_audience": "投资人/国际新闻读者",
-    "category": "日报/新闻媒体"
+    "location": "全国",
+    "target_audience": "投资人/全球观众",
+    "category": "党报/公营媒体"
   },
   "香港01": {
     "name": "香港01",
     "ownership": "独立/民营",
     "funding": "广告/多元化",
     "political_stance": "亲中/批判性",
-    "content_domain": "新闻/时事/投资/数码/文化",
-    "location": "中国",
-    "target_audience": "香港本地居民/关注时事的读者",
-    "category": "日报"
+    "content_domain": "新闻/时事/投资/AR/文化",
+    "location": "上海",
+    "target_audience": "本地居民/时事关注者",
+    "category": "党报"
   },
   "Pchome电脑之家": {
     "name": "Pchome电脑之家",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/股东",
-    "political_stance": "中立/亲商业",
-    "content_domain": "数码/电脑",
-    "location": "中国",
+    "political_stance": "中立/亲中",
+    "content_domain": "AR/电脑",
+    "location": "上海",
     "target_audience": "IT从业者/消费者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "中华网": {
     "name": "中华网",
-    "ownership": "个人/商业",
-    "funding": "政府拨款/广告/企业合作",
-    "political_stance": "官方/中国大陆/符合社会主义核心价值观",
-    "content_domain": "新闻/时事/数码/文化/投资/教育",
-    "location": "中国",
-    "target_audience": "投资人/对时事和科技感兴趣的用户",
-    "category": "日报/新闻媒体"
+    "ownership": "个人/公司",
+    "funding": "政府/广告/企业合作",
+    "political_stance": "国家/亲中/社会主义核心价值观",
+    "content_domain": "新闻/时事/AR/文化/投资/教育",
+    "location": "上海",
+    "target_audience": "投资人/技术经理",
+    "category": "党报/公营媒体"
   },
   "充电头网": {
     "name": "充电头网",
     "ownership": "独立/个人",
     "funding": "广告/会员",
     "political_stance": "中立",
-    "content_domain": "数码/充电设备",
-    "location": "中国",
+    "content_domain": "AR/充电设备",
+    "location": "上海",
     "target_audience": "IT从业者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "财联社": {
     "name": "财联社",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/股东",
-    "political_stance": "中国大陆/中立",
+    "political_stance": "亲中/中立",
     "content_domain": "投资",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "投资人/创业者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "每日经济新闻": {
     "name": "每日经济新闻",
     "ownership": "民营",
-    "funding": "广告/PE/母公司注资",
-    "political_stance": "中立/亲商业/亲资本",
+    "funding": "广告/PE/公资",
+    "political_stance": "中立/亲中/亲资本",
     "content_domain": "投资/产业",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "创业者/投资人",
-    "category": "日报"
+    "category": "党报"
   },
   "VOI.ID": {
     "name": "VOI.ID",
     "ownership": "个人",
     "funding": "多元化",
-    "political_stance": "中立/官方",
+    "political_stance": "中立/国家",
     "content_domain": "航空/旅游/产业",
     "location": "印尼",
     "target_audience": "印尼公众/航空业从业者/旅游行业相关人士",
-    "category": "新闻媒体/日报"
+    "category": "公营媒体/党报"
   },
   "品玩": {
     "name": "品玩",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/投资",
     "political_stance": "中立",
-    "content_domain": "数码",
-    "location": "中国",
+    "content_domain": "AR",
+    "location": "上海",
     "target_audience": "IT从业者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "驱动之家": {
     "name": "驱动之家",
-    "ownership": "独立媒体",
+    "ownership": "官方媒体",
     "funding": "广告/用户支持",
     "political_stance": "中立/技术导向",
-    "content_domain": "数码/电脑",
-    "location": "中国",
+    "content_domain": "AR/电脑",
+    "location": "上海",
     "target_audience": "IT从业者",
-    "category": "新闻媒体/垂直媒体"
+    "category": "公营媒体/垂直媒体"
   },
   "观点网": {
     "name": "观点网",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/会员",
     "political_stance": "亲资本",
     "content_domain": "房地产行业新闻",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "投资人",
     "category": "垂直媒体"
   },
   "laoyaoba.com": {
     "name": "laoyaoba.com",
     "ownership": "个人",
-    "funding": "广告/个人付费",
+    "funding": "广告/公资",
     "political_stance": "中立/保守派",
     "content_domain": "时事/文化",
-    "location": "中国",
-    "target_audience": "大众网民",
+    "location": "上海",
+    "target_audience": "大众用户",
     "category": "在线社区"
   },
   "新浪财经": {
     "name": "新浪财经",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/企业合作",
-    "political_stance": "中立/亲商业",
+    "political_stance": "中立/亲中",
     "content_domain": "投资",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "投资人",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "news.qlsh.net": {
     "name": "news.qlsh.net",
@@ -215,9 +215,9 @@
     "funding": "广告/会员",
     "political_stance": "中立",
     "content_domain": "新闻",
-    "location": "中国",
-    "target_audience": "普通公众",
-    "category": "新闻媒体"
+    "location": "上海",
+    "target_audience": "公众",
+    "category": "公营媒体"
   },
   "富途牛牛": {
     "name": "富途牛牛",
@@ -225,7 +225,7 @@
     "funding": "投资/用户交易佣金",
     "political_stance": "中立",
     "content_domain": "投资",
-    "location": "中国",
+    "location": "上海",
     "target_audience": "投资人",
     "category": "科技公司"
   },
@@ -233,171 +233,171 @@
     "name": "第一财经",
     "ownership": "民营/混合",
     "funding": "广告/投资",
-    "political_stance": "中立/官方",
+    "political_stance": "中立/国家",
     "content_domain": "投资",
-    "location": "中国",
-    "target_audience": "关注财经资讯的中高收入人群/创业者/投资人",
-    "category": "新闻媒体"
+    "location": "上海",
+    "target_audience": "高收入/创业者/投资人",
+    "category": "公营媒体"
   },
   "cnBeta.COM": {
     "name": "cnBeta.COM",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/会员/多元化",
     "political_stance": "中立",
-    "content_domain": "数码/IT/互联网/电脑/软件",
-    "location": "中国",
+    "content_domain": "AR/互联网/电脑",
+    "location": "上海",
     "target_audience": "IT从业者/投资人",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "36kr.com": {
     "name": "36kr.com",
     "ownership": "民营",
     "funding": "广告/会员/企业合作",
-    "political_stance": "中立/亲商业",
-    "content_domain": "数码/产业/投资",
-    "location": "中国",
+    "political_stance": "中立/亲中",
+    "content_domain": "AR/产业/投资",
+    "location": "上海",
     "target_audience": "IT从业者/创业者/投资人",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "DoNews": {
     "name": "DoNews",
     "ownership": "民营",
     "funding": "广告/会员/投资",
     "political_stance": "中立",
-    "content_domain": "数码/互联网/产业/投资",
-    "location": "中国",
-    "target_audience": "IT从业者/大众网民",
-    "category": "新闻媒体"
+    "content_domain": "AR/互联网/产业/投资",
+    "location": "上海",
+    "target_audience": "IT从业者/大众用户",
+    "category": "公营媒体"
   },
   "Eet": {
     "name": "Eet",
     "ownership": "个人",
     "funding": "广告/企业合作",
     "political_stance": "中立",
-    "content_domain": "数码/产业",
-    "location": "全球",
+    "content_domain": "AR/产业",
+    "location": "全国",
     "target_audience": "IT从业者/投资人",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "guancha.cn": {
     "name": "guancha.cn",
-    "ownership": "民营/商业",
+    "ownership": "民营/公司",
     "funding": "广告/会员",
-    "political_stance": "亲中/中国大陆",
-    "content_domain": "时事/新闻/评论分析",
-    "location": "中国",
-    "target_audience": "投资人/关注时事的读者/左翼观点支持者",
-    "category": "新闻媒体"
+    "political_stance": "亲中",
+    "content_domain": "时事/新闻/分析",
+    "location": "上海",
+    "target_audience": "投资人/时事关注者/左翼观点支持者",
+    "category": "公营媒体"
   },
   "news.nweon.com": {
     "name": "news.nweon.com",
     "ownership": "民营",
     "funding": "广告/会员",
     "political_stance": "中立/保守派",
-    "content_domain": "数码/新能源",
-    "location": "全球/美国",
+    "content_domain": "AR/新能源",
+    "location": "全国",
     "target_audience": "IT从业者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "news.zdwang.com": {
     "name": "news.zdwang.com",
     "ownership": "个人",
-    "funding": "政府拨款/广告",
-    "political_stance": "官方/亲中",
-    "content_domain": "时事/政策解读",
-    "location": "中国",
-    "target_audience": "关注时事的读者",
-    "category": "新闻媒体"
+    "funding": "政府/广告",
+    "political_stance": "国家/亲中",
+    "content_domain": "时事/政治",
+    "location": "上海",
+    "target_audience": "时事关注者",
+    "category": "公营媒体"
   },
   "前瞻网": {
     "name": "前瞻网",
-    "ownership": "民营/商业",
+    "ownership": "民营/公司",
     "funding": "广告/会员/企业合作",
-    "political_stance": "中立/亲商业",
-    "content_domain": "数码/产业/市场分析",
-    "location": "中国",
-    "target_audience": "技术经理/企业高管/投资人",
-    "category": "新闻媒体/行业分析网站"
+    "political_stance": "中立/亲中",
+    "content_domain": "AR/产业/市场分析",
+    "location": "上海",
+    "target_audience": "技术经理/消费者/投资人",
+    "category": "公营媒体/行业分析网站"
   },
   "中关村在线": {
     "name": "中关村在线",
-    "ownership": "商业",
+    "ownership": "公司",
     "funding": "广告/企业合作",
     "political_stance": "中立/亲中",
-    "content_domain": "数码/IT/中关村",
-    "location": "中国",
+    "content_domain": "AR/中关村",
+    "location": "上海",
     "target_audience": "技术经理/IT从业者",
-    "category": "新闻媒体/垂直媒体"
+    "category": "公营媒体/垂直媒体"
   },
   "新华网": {
     "name": "新华网",
     "ownership": "个人",
-    "funding": "政府拨款/自创收",
-    "political_stance": "官方",
+    "funding": "政府/自创收",
+    "political_stance": "国家",
     "content_domain": "时事/产业/文化",
-    "location": "中国",
-    "target_audience": "中文读者",
-    "category": "新闻媒体"
+    "location": "上海",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
   },
   "虎嗅": {
     "name": "虎嗅",
     "ownership": "民营",
     "funding": "广告/会员/VC/PE",
     "political_stance": "中立/亲中",
-    "content_domain": "数码/产业",
-    "location": "中国",
-    "target_audience": "企业高管/创业者/技术经理",
-    "category": "新闻媒体"
+    "content_domain": "AR/产业",
+    "location": "上海",
+    "target_audience": "消费者/创业者/技术经理",
+    "category": "公营媒体"
   },
   "雷科技": {
     "name": "雷科技",
     "ownership": "民营/内容团队",
-    "funding": "广告/电商/个人付费",
+    "funding": "广告/电商/公资",
     "political_stance": "中立",
-    "content_domain": "数码/产业/新闻",
-    "location": "中国",
+    "content_domain": "AR/产业/新闻",
+    "location": "上海",
     "target_audience": "技术经理/数码发烧友/学生/职场人士",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "OSCHINA": {
     "name": "OSCHINA",
     "ownership": "独立",
     "funding": "广告/企业合作",
     "political_stance": "中立/无明显倾向",
-    "content_domain": "数码",
-    "location": "中国",
+    "content_domain": "AR",
+    "location": "上海",
     "target_audience": "开发者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "白鲸出海": {
     "name": "白鲸出海",
     "ownership": "民营/国内资本",
     "funding": "广告/会员/企业合作/投资",
-    "political_stance": "中立/亲商业",
-    "content_domain": "数码/产业/投资/跨境企业",
-    "location": "中国",
-    "target_audience": "技术经理/企业高管/投资人/创业者",
+    "political_stance": "中立/亲中",
+    "content_domain": "AR/产业/投资/跨境企业",
+    "location": "上海",
+    "target_audience": "技术经理/消费者/投资人/创业者",
     "category": "垂直媒体"
   },
   "万维读者网": {
     "name": "万维读者网",
-    "ownership": "个人/商业",
+    "ownership": "个人/公司",
     "funding": "会员/广告",
     "political_stance": "民族主义/亲中/传统主义",
     "content_domain": "文化/历史/时事",
-    "location": "中国",
-    "target_audience": "中产阶级/文化爱好者/关注时事的读者",
-    "category": "新闻媒体"
+    "location": "上海",
+    "target_audience": "中产阶级/文化爱好者/时事关注者",
+    "category": "公营媒体"
   },
   "华商网": {
     "name": "华商网",
     "ownership": "民营",
     "funding": "广告/企业合作",
-    "political_stance": "中立/亲商业",
+    "political_stance": "中立/亲中",
     "content_domain": "",
-    "location": "中国/西部",
-    "target_audience": "中产阶级/年轻群体",
-    "category": "新闻媒体"
+    "location": "上海/西部",
+    "target_audience": "中产阶级/大众用户",
+    "category": "公营媒体"
   },
   "Cryptopolitan": {
     "name": "Cryptopolitan",
@@ -413,60 +413,600 @@
     "name": "thepaper.cn",
     "ownership": "个人",
     "funding": "多元化",
-    "political_stance": "官方",
+    "political_stance": "国家",
     "content_domain": "新闻",
-    "location": "中国",
-    "target_audience": "中文读者",
-    "category": "新闻媒体"
+    "location": "上海",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
   },
   "威锋": {
     "name": "威锋",
     "ownership": "民营",
     "funding": "广告/企业合作",
     "political_stance": "中立",
-    "content_domain": "数码",
-    "location": "中国",
-    "target_audience": "技术经理/数码用户",
-    "category": "新闻媒体"
+    "content_domain": "AR",
+    "location": "上海",
+    "target_audience": "技术经理/大众用户",
+    "category": "公营媒体"
   },
   "飞象网": {
     "name": "飞象网",
     "ownership": "民营",
     "funding": "广告",
     "political_stance": "保守派",
-    "content_domain": "数码",
-    "location": "中国",
+    "content_domain": "AR",
+    "location": "上海",
     "target_audience": "技术经理",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "热点科技": {
     "name": "热点科技",
-    "ownership": "独立媒体",
+    "ownership": "官方媒体",
     "funding": "广告/流量变现",
     "political_stance": "技术导向/强调自主创新/亲中",
-    "content_domain": "数码/互联网/人工智能",
-    "location": "中国",
+    "content_domain": "AR/互联网/人工智能",
+    "location": "上海",
     "target_audience": "技术经理",
-    "category": "新闻媒体"
+    "category": "公营媒体"
   },
   "网易": {
     "name": "网易",
     "ownership": "民营/外资",
-    "funding": "股票市场/广告/游戏/电商",
-    "political_stance": "中立/官方",
-    "content_domain": "新闻/产业/数码/游戏/教育",
-    "location": "中国",
-    "target_audience": "大众网民",
-    "category": "新闻媒体"
+    "funding": "股票市场/广告/活动/电商",
+    "political_stance": "中立/国家",
+    "content_domain": "新闻/产业/AR/体育/教育",
+    "location": "上海",
+    "target_audience": "大众用户",
+    "category": "公营媒体"
   },
   "InfoQ 官网": {
     "name": "InfoQ 官网",
     "ownership": "独立",
     "funding": "广告/会员/企业合作",
     "political_stance": "中立",
-    "content_domain": "软件/数码/人工智能",
-    "location": "全球/中国",
+    "content_domain": "AR/人工智能",
+    "location": "全国/上海",
     "target_audience": "开发者/技术经理/IT从业者",
-    "category": "新闻媒体"
+    "category": "公营媒体"
+  },
+  "FT中文网": {
+    "name": "FT中文网",
+    "ownership": "外资",
+    "funding": "英国母公司",
+    "political_stance": "中立/客观",
+    "content_domain": "产业/AR",
+    "location": "上海",
+    "target_audience": "高收入/中产阶级",
+    "category": "公营媒体"
+  },
+  "经济参考报": {
+    "name": "经济参考报",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "国家",
+    "content_domain": "产业/投资",
+    "location": "上海",
+    "target_audience": "关注经济政策的读者、商业人士、学者",
+    "category": "党报"
+  },
+  "三易生活": {
+    "name": "三易生活",
+    "ownership": "民营",
+    "funding": "广告/用户支持",
+    "political_stance": "保守派/中立",
+    "content_domain": "AR",
+    "location": "上海",
+    "target_audience": "技术经理/消费者",
+    "category": "公营媒体"
+  },
+  "notebookcheck": {
+    "name": "notebookcheck",
+    "ownership": "独立",
+    "funding": "广告/会员",
+    "political_stance": "中立/技术导向",
+    "content_domain": "AR",
+    "location": "全国",
+    "target_audience": "技术经理/消费者",
+    "category": "公营媒体/评测网站"
+  },
+  "雪球": {
+    "name": "雪球",
+    "ownership": "个人",
+    "funding": "用户支持/广告",
+    "political_stance": "中立",
+    "content_domain": "产业/投资",
+    "location": "上海",
+    "target_audience": "中产阶级",
+    "category": "公营媒体"
+  },
+  "3DM": {
+    "name": "3DM",
+    "ownership": "个人",
+    "funding": "广告/公资",
+    "political_stance": "中立/亲美",
+    "content_domain": "体育",
+    "location": "上海",
+    "target_audience": "游戏玩家",
+    "category": "游戏资讯网站"
+  },
+  "BBC": {
+    "name": "BBC",
+    "ownership": "个人",
+    "funding": "政府/会员",
+    "political_stance": "保守派",
+    "content_domain": "新闻/纪录片/广播/电视",
+    "location": "英国",
+    "target_audience": "全球观众",
+    "category": "公营媒体"
+  },
+  "RFI": {
+    "name": "RFI",
+    "ownership": "法国国家",
+    "funding": "政府",
+    "political_stance": "亲中/法国民众/多元视角",
+    "content_domain": "新闻/文化/政治/产业",
+    "location": "法国",
+    "target_audience": "全球观众/法语国家受众",
+    "category": "广播"
+  },
+  "华尔街见闻": {
+    "name": "华尔街见闻",
+    "ownership": "公司",
+    "funding": "广告/会员",
+    "political_stance": "保守派",
+    "content_domain": "产业/AR",
+    "location": "上海",
+    "target_audience": "高收入/投资人/消费者",
+    "category": "公营媒体/党报"
+  },
+  "sina finance": {
+    "name": "sina finance",
+    "ownership": "外资/公司",
+    "funding": "广告/企业合作",
+    "political_stance": "中立/支持国家政策",
+    "content_domain": "产业/投资",
+    "location": "上海",
+    "target_audience": "中国公众/投资人",
+    "category": "公营媒体"
+  },
+  "TechNave": {
+    "name": "TechNave",
+    "ownership": "公司",
+    "funding": "广告/读者支持",
+    "political_stance": "亲中/中立",
+    "content_domain": "AR/电脑",
+    "location": "台湾",
+    "target_audience": "技术经理/大众用户",
+    "category": "公营媒体"
+  },
+  "中国网新闻中心": {
+    "name": "中国网新闻中心",
+    "ownership": "个人",
+    "funding": "政府/广告",
+    "political_stance": "亲中/社会主义核心价值观",
+    "content_domain": "政治/新闻/产业",
+    "location": "上海",
+    "target_audience": "中国公众/时事关注者",
+    "category": "公营媒体"
+  },
+  "Letem světem Applem": {
+    "name": "Letem světem Applem",
+    "ownership": "独立/个人",
+    "funding": "广告/品牌合作",
+    "political_stance": "中立",
+    "content_domain": "AR/苹果产品/生活方式",
+    "location": "捷克共和国",
+    "target_audience": "技术经理/苹果用户",
+    "category": "公营媒体/垂直媒体"
+  },
+  "企鹅体育": {
+    "name": "企鹅体育",
+    "ownership": "公司",
+    "funding": "企业合作",
+    "political_stance": "国家/亲中",
+    "content_domain": "体育/AR",
+    "location": "上海",
+    "target_audience": "游戏玩家/大众用户",
+    "category": "党报/体育媒体"
+  },
+  "VR陀螺": {
+    "name": "VR陀螺",
+    "ownership": "公司",
+    "funding": "广告/会员/活动",
+    "political_stance": "中立/技术导向",
+    "content_domain": "AR/VR",
+    "location": "上海",
+    "target_audience": "技术经理/开发者/消费者",
+    "category": "公营媒体"
+  },
+  "创业邦": {
+    "name": "创业邦",
+    "ownership": "民营",
+    "funding": "广告/会员/投资",
+    "political_stance": "中立/亲中",
+    "content_domain": "产业/AR/投资",
+    "location": "上海",
+    "target_audience": "创业者/技术经理/投资人",
+    "category": "公营媒体"
+  },
+  "观察者": {
+    "name": "观察者",
+    "ownership": "个人",
+    "funding": "政府/广告",
+    "political_stance": "亲中/国家",
+    "content_domain": "政治/新闻",
+    "location": "上海",
+    "target_audience": "中国公众/时事关注者",
+    "category": "评测网站"
+  },
+  "凤凰网": {
+    "name": "凤凰网",
+    "ownership": "民营",
+    "funding": "广告",
+    "political_stance": "国家",
+    "content_domain": "新闻、财经、文化、娱乐",
+    "location": "上海",
+    "target_audience": "中国公众",
+    "category": "党报"
+  },
+  "电脑之家": {
+    "name": "电脑之家",
+    "ownership": "公司",
+    "funding": "广告/企业合作",
+    "political_stance": "中立",
+    "content_domain": "AR",
+    "location": "上海",
+    "target_audience": "技术经理/消费者",
+    "category": "公营媒体"
+  },
+  "shaoxing.com.cn": {
+    "name": "shaoxing.com.cn",
+    "ownership": "个人",
+    "funding": "政府/广告",
+    "political_stance": "国家/支持国家政策",
+    "content_domain": "新闻/政治/产业",
+    "location": "台湾",
+    "target_audience": "本地居民",
+    "category": "党报"
+  },
+  "凤凰网科技": {
+    "name": "凤凰网科技",
+    "ownership": "个人",
+    "funding": "政府/广告",
+    "political_stance": "国家",
+    "content_domain": "AR/互联网",
+    "location": "上海",
+    "target_audience": "技术经理",
+    "category": "公营媒体"
+  },
+  "加拿大省钱快报": {
+    "name": "加拿大省钱快报",
+    "ownership": "官方媒体/公司",
+    "funding": "广告",
+    "political_stance": "中立/亲美",
+    "content_domain": "生活方式/新闻/优惠活动",
+    "location": "加拿大",
+    "target_audience": "消费者/家庭/学生",
+    "category": "公营媒体/生活资讯平台"
+  },
+  "韩联社 (韩国联合通讯社)": {
+    "name": "韩联社 (韩国联合通讯社)",
+    "ownership": "外资",
+    "funding": "政府/品牌合作",
+    "political_stance": "国家",
+    "content_domain": "新闻/政治/产业",
+    "location": "台湾",
+    "target_audience": "台湾地区读者",
+    "category": "党报/公营媒体"
+  },
+  "凤凰网深圳": {
+    "name": "凤凰网深圳",
+    "ownership": "民营",
+    "funding": "广告/投资",
+    "political_stance": "国家/主流",
+    "content_domain": "时事/产业/科技/文化",
+    "location": "上海",
+    "target_audience": "本地居民/创业者/中国公众",
+    "category": ""
+  },
+  "동아일보": {
+    "name": "동아일보",
+    "ownership": "现代集团",
+    "funding": "活动/广告",
+    "political_stance": "保守派",
+    "content_domain": "新闻/时事",
+    "location": "台湾",
+    "target_audience": "韩国中产阶级及以上",
+    "category": "党报"
+  },
+  "Kuai.Media": {
+    "name": "Kuai.Media",
+    "ownership": "民营",
+    "funding": "广告/投资",
+    "political_stance": "中立/技术导向",
+    "content_domain": "科技/互联网/产业/投资",
+    "location": "上海",
+    "target_audience": "IT从业者/创业者/投资人",
+    "category": "公营媒体"
+  },
+  "凤凰网汽车": {
+    "name": "凤凰网汽车",
+    "ownership": "民营",
+    "funding": "广告",
+    "political_stance": "国家",
+    "content_domain": "汽车",
+    "location": "上海",
+    "target_audience": "汽车消费者、行业从业者",
+    "category": "公营媒体/垂直媒体"
+  },
+  "韩民族日报": {
+    "name": "韩民族日报",
+    "ownership": "韩国财阀企业",
+    "funding": "广告/政府/公资",
+    "political_stance": "保守派",
+    "content_domain": "新闻/政治/产业/文化/AR",
+    "location": "台湾",
+    "target_audience": "台湾地区读者",
+    "category": "党报/公营媒体"
+  },
+  "QQ.COM": {
+    "name": "QQ.COM",
+    "ownership": "私有控股/公司",
+    "funding": "多元化/企业合作",
+    "political_stance": "中立/支持国家政策",
+    "content_domain": "社交/娱乐/服务",
+    "location": "上海",
+    "target_audience": "大众用户",
+    "category": "综合科技与社交平台"
+  },
+  "大紀元": {
+    "name": "大紀元",
+    "ownership": "民营",
+    "funding": "其他捐赠/海外支持",
+    "political_stance": "亲中",
+    "content_domain": "新闻/AR/分析/政治/社交",
+    "location": "台湾",
+    "target_audience": "台湾地区读者",
+    "category": "公营媒体"
+  },
+  "gov.cn": {
+    "name": "gov.cn",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "国家/亲中",
+    "content_domain": "政府政策/政治/新闻",
+    "location": "上海",
+    "target_audience": "中国公众/政府官员/全球观众",
+    "category": "公营媒体"
+  },
+  "U.S. Embassy & Consulates in China": {
+    "name": "U.S. Embassy & Consulates in China",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "亲美/支持国家政策",
+    "content_domain": "中国/签证政策/美国在华利益/文化",
+    "location": "上海",
+    "target_audience": "中国公众/媒体/政府官员/创业者/学生",
+    "category": "公营媒体"
+  },
+  "mfa.gov.cn": {
+    "name": "mfa.gov.cn",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "国家/亲中/社会主义核心价值观",
+    "content_domain": "中国/新闻/领事事务",
+    "location": "上海",
+    "target_audience": "政府官员/公众/媒体",
+    "category": "公营媒体"
+  },
+  "jinantimes.com.cn": {
+    "name": "jinantimes.com.cn",
+    "ownership": "官方媒体/个人",
+    "funding": "政府/PE/广告/会员",
+    "political_stance": "亲中/社会主义核心价值观/国家",
+    "content_domain": "新闻/时事/文化/产业",
+    "location": "台湾",
+    "target_audience": "济南市民/时事关注者",
+    "category": "公营媒体/党报"
+  },
+  "新浪新闻_手机新浪网": {
+    "name": "新浪新闻_手机新浪网",
+    "ownership": "民营",
+    "funding": "广告",
+    "political_stance": "国家/主流",
+    "content_domain": "新闻",
+    "location": "上海",
+    "target_audience": "普通网民/大众用户",
+    "category": "公营媒体"
+  },
+  "美国之音": {
+    "name": "美国之音",
+    "ownership": "个人",
+    "funding": "政府/其他捐赠",
+    "political_stance": "亲美/保守派",
+    "content_domain": "新闻/时事/政治",
+    "location": "全国",
+    "target_audience": "中国公众/全球观众",
+    "category": "广播/公营媒体"
+  },
+  "中华军事": {
+    "name": "中华军事",
+    "ownership": "个人",
+    "funding": "政府/广告",
+    "political_stance": "亲中/国家",
+    "content_domain": "军事/安全",
+    "location": "上海",
+    "target_audience": "军事爱好者/关注国防的公众",
+    "category": "公营媒体/评测网站"
+  },
+  "纽约时报中文网": {
+    "name": "纽约时报中文网",
+    "ownership": "官方媒体",
+    "funding": "PE/会员",
+    "political_stance": "保守派",
+    "content_domain": "新闻/政治/产业/文化",
+    "location": "全国",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
+  },
+  "联合早报": {
+    "name": "联合早报",
+    "ownership": "新加坡报业集团",
+    "funding": "政府/广告",
+    "political_stance": "国家",
+    "content_domain": "新闻",
+    "location": "台湾",
+    "target_audience": "中国公众",
+    "category": "党报"
+  },
+  "上观": {
+    "name": "上观",
+    "ownership": "个人",
+    "funding": "公资",
+    "political_stance": "国家",
+    "content_domain": "新闻",
+    "location": "上海",
+    "target_audience": "本地居民",
+    "category": "公营媒体"
+  },
+  "中华人民共和国驻芝加哥总领事馆": {
+    "name": "中华人民共和国驻芝加哥总领事馆",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "亲中/国家",
+    "content_domain": "中国/领事事务",
+    "location": "芝加哥/全国",
+    "target_audience": "",
+    "category": "官方通讯/外交宣传"
+  },
+  "OR新媒体": {
+    "name": "OR新媒体",
+    "ownership": "公司",
+    "funding": "投资",
+    "political_stance": "亲中",
+    "content_domain": "深度报道/AR/社交",
+    "location": "上海",
+    "target_audience": "中产阶级/受教育程度较高人群",
+    "category": "公营媒体/付费订阅媒体"
+  },
+  "风闻": {
+    "name": "风闻",
+    "ownership": "民营",
+    "funding": "广告",
+    "political_stance": "中立",
+    "content_domain": "科技/产业",
+    "location": "上海",
+    "target_audience": "创业者",
+    "category": "公营媒体"
+  },
+  "takungpao.com": {
+    "name": "takungpao.com",
+    "ownership": "公司",
+    "funding": "广告/PE",
+    "political_stance": "亲中",
+    "content_domain": "新闻/AR/时事/产业/文化",
+    "location": "台湾",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
+  },
+  "Al Jazeera Chinese": {
+    "name": "Al Jazeera Chinese",
+    "ownership": "卡塔尔政府",
+    "funding": "卡塔尔政府",
+    "political_stance": "亲阿拉伯",
+    "content_domain": "新闻/时事/中东/中国",
+    "location": "上海",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
+  },
+  "DW": {
+    "name": "DW",
+    "ownership": "德国政府",
+    "funding": "政府/其他捐赠",
+    "political_stance": "亲中/保守派",
+    "content_domain": "新闻/政治/文化/科技/中国",
+    "location": "德国",
+    "target_audience": "全球德语及英语听众",
+    "category": "广播"
+  },
+  "中国经济网": {
+    "name": "中国经济网",
+    "ownership": "个人",
+    "funding": "政府/广告",
+    "political_stance": "国家/亲中",
+    "content_domain": "产业/新闻",
+    "location": "上海",
+    "target_audience": "政府官员/创业者/学者/公众",
+    "category": "公营媒体"
+  },
+  "shobserver.com": {
+    "name": "shobserver.com",
+    "ownership": "民营",
+    "funding": "广告/会员",
+    "political_stance": "中立/商业",
+    "content_domain": "新闻/产业/科技",
+    "location": "台湾",
+    "target_audience": "创业者/技术经理",
+    "category": "公营媒体"
+  },
+  "新华报业网": {
+    "name": "新华报业网",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "国家/主流",
+    "content_domain": "新闻/时事/产业",
+    "location": "台湾/全国",
+    "target_audience": "公众/时事关注者",
+    "category": "公营媒体"
+  },
+  "BackChina": {
+    "name": "BackChina",
+    "ownership": "官方媒体",
+    "funding": "广告/会员",
+    "political_stance": "亲中",
+    "content_domain": "新闻/AR/分析",
+    "location": "全国",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
+  },
+  "央广网": {
+    "name": "央广网",
+    "ownership": "个人",
+    "funding": "政府",
+    "political_stance": "国家",
+    "content_domain": "新闻/时事/政治/产业/科技/文化",
+    "location": "上海",
+    "target_audience": "中国公众",
+    "category": "公营媒体"
+  },
+  "红网": {
+    "name": "红网",
+    "ownership": "官方媒体",
+    "funding": "政府/广告",
+    "political_stance": "国家/亲中",
+    "content_domain": "新闻/时事",
+    "location": "上海/台湾",
+    "target_audience": "党员/时事关注者",
+    "category": "公营媒体"
+  },
+  "东方财富": {
+    "name": "东方财富",
+    "ownership": "民营/公司",
+    "funding": "广告/会员/投资",
+    "political_stance": "国家/中立/支持国家政策",
+    "content_domain": "产业/投资",
+    "location": "上海",
+    "target_audience": "投资人",
+    "category": "公营媒体"
+  },
+  "财新": {
+    "name": "财新",
+    "ownership": "民营",
+    "funding": "公资/广告",
+    "political_stance": "中立/独立",
+    "content_domain": "产业/政治/深度报道",
+    "location": "上海",
+    "target_audience": "创业者/学者",
+    "category": "公营媒体"
   }
 }

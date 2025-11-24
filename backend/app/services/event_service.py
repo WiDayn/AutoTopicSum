@@ -21,6 +21,8 @@ from config import Config
 
 # 新增情感分析导入
 from app.services.sentiment_service import sentiment_analyzer
+# 新增分词服务导入
+from app.services.word_segmentation_service import word_segmentation_service
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +140,7 @@ class EventService:
         region = params.get('region', 'CN')
 
         curr_prog, curr_step = 0, 1
-        total_step = 5
+        total_step = 6
         prog_of_single_step = int(100. / total_step)
 
         # 阶段1: 从数据源搜索
@@ -175,6 +177,21 @@ class EventService:
         curr_prog += prog_of_single_step
         curr_step += 1
 
+        # 阶段6：分词处理
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在进行分词处理...')
+        segmentation_result = None
+        try:
+            seg_result = word_segmentation_service.segment(query)
+            if seg_result.get('success') and seg_result.get('data'):
+                segmentation_result = seg_result['data']
+                logger.info(f"查询词 '{query}' 分词成功，共 {segmentation_result.get('total_words', 0)} 个词")
+            else:
+                logger.warning(f"查询词 '{query}' 分词失败: {seg_result.get('message', '未知错误')}")
+        except Exception as e:
+            logger.error(f"分词处理异常: {str(e)}")
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
         if curr_step == total_step:
             curr_prog = 100
         
@@ -184,6 +201,7 @@ class EventService:
             articles_with_sentiment,
             media_info_dict,
             timeline_nodes,
+            segmentation_result,
         )
         event['status'] = 'completed'
         event['progress'] = {
@@ -342,7 +360,8 @@ class EventService:
         query: str,
         articles: List[Dict],
         media_info_dict: Optional[Dict[str, Dict]] = None,
-        timeline_nodes=None
+        timeline_nodes=None,
+        segmentation_result: Optional[Dict] = None
     ) -> Dict:
         """
         从文章列表创建事件
@@ -416,6 +435,7 @@ class EventService:
                 'media_info': media_info_dict if media_info_dict else {}
             },
             'timeline': timeline_nodes,
+            'word_segmentation': segmentation_result,  # 新增分词结果
         }
         
         return event

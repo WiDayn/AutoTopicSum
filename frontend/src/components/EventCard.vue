@@ -45,6 +45,29 @@
         正在从多个数据源聚合新闻...
       </p>
       
+      <!-- 分词结果（简要） -->
+      <div v-if="event.word_segmentation && event.status !== 'processing'" class="flex flex-wrap gap-1.5 items-center">
+        <div
+          v-for="(segment, index) in event.word_segmentation.segments.slice(0, 5)"
+          :key="index"
+          class="flex items-center gap-1"
+          :title="segment.pos_label || segment.pos || ''"
+        >
+          <Badge
+            variant="outline"
+            class="text-xs"
+          >
+            {{ segment.word }}
+          </Badge>
+          <span v-if="segment.pos" class="text-xs text-muted-foreground">
+            ({{ segment.pos }})
+          </span>
+        </div>
+        <span v-if="event.word_segmentation.segments.length > 5" class="text-xs text-muted-foreground">
+          +{{ event.word_segmentation.segments.length - 5 }}
+        </span>
+      </div>
+
       <!-- 元信息 -->
       <div v-if="event.status !== 'processing'" class="space-y-2">
         <div class="flex items-center gap-4 text-sm text-muted-foreground">

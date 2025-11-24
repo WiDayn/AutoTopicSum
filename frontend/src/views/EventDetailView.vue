@@ -35,6 +35,64 @@
           </div>
         </div>
 
+        <!-- 分词结果 -->
+        <Card v-if="event.word_segmentation" class="p-6">
+          <h2 class="text-xl font-semibold mb-4">查询词分词结果</h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-muted-foreground">原始查询：</span>
+              <span class="font-medium">{{ event.word_segmentation.original_text }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-muted-foreground">分词数量：</span>
+              <span class="font-medium">{{ event.word_segmentation.total_words }} 个词</span>
+            </div>
+            <div class="pt-2">
+              <div class="text-sm text-muted-foreground mb-2">分词结果（含词性）：</div>
+              <div class="flex flex-wrap gap-2">
+                <div
+                  v-for="(segment, index) in event.word_segmentation.segments"
+                  :key="index"
+                  class="flex flex-col items-center gap-1"
+                >
+                  <Badge
+                    variant="default"
+                    class="text-sm"
+                  >
+                    {{ segment.word }}
+                  </Badge>
+                  <Badge
+                    v-if="segment.pos"
+                    variant="secondary"
+                    class="text-xs"
+                    :title="segment.pos_label || segment.pos"
+                  >
+                    {{ segment.pos }}
+                  </Badge>
+                  <span
+                    v-if="segment.pos_label"
+                    class="text-xs text-muted-foreground"
+                  >
+                    {{ segment.pos_label }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-if="event.word_segmentation.segmented_text_with_pos" class="pt-2 border-t">
+              <div class="text-sm text-muted-foreground mb-1">完整分词文本（含词性）：</div>
+              <div class="text-sm font-mono bg-muted/50 p-2 rounded">
+                {{ event.word_segmentation.segmented_text_with_pos }}
+              </div>
+            </div>
+            <div v-else-if="event.word_segmentation.segmented_text" class="pt-2 border-t">
+              <div class="text-sm text-muted-foreground mb-1">完整分词文本：</div>
+              <div class="text-sm font-mono bg-muted/50 p-2 rounded">
+                {{ event.word_segmentation.segmented_text }}
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <!-- 情感分析概览 -->
         <Card v-if="event.sentiment_analysis" class="p-6">
           <h2 class="text-xl font-semibold mb-4">情感分析概览</h2>

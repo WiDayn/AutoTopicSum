@@ -13,7 +13,7 @@ class Config:
     PORT = int(os.getenv('PORT', 5001))
     
     # 硅基流动 API 配置
-    SILICONFLOW_API_KEY = os.getenv('SILICONFLOW_API_KEY', '')
+    SILICONFLOW_API_KEY = os.getenv('SILICONFLOW_API_KEY', 'sk-xkxjsucagqkcuusgqhwbcrmxygnsxztuazwoptocovbromlo')
     SILICONFLOW_API_URL = 'https://api.siliconflow.cn/v1/chat/completions'
     SILICONFLOW_MODEL = 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
     
@@ -24,8 +24,8 @@ class Config:
     BERT_ENCODING_RECORD_FILE = os.getenv('BERT_ENCODING_RECORD_FILE', 'data/bert_encoding_record.json')
     
     # WebDriver 代理配置
-    WEBDRIVER_PROXY = os.getenv('WEBDRIVER_PROXY', '')  # 格式: http://host:port 或 socks5://host:port
-    WEBDRIVER_PROXY_ENABLED = os.getenv('WEBDRIVER_PROXY_ENABLED', 'False').lower() == 'true'
+    WEBDRIVER_PROXY = os.getenv('WEBDRIVER_PROXY', 'http://127.0.0.1:10808')  # 格式: http://host:port 或 socks5://host:port
+    WEBDRIVER_PROXY_ENABLED = os.getenv('WEBDRIVER_PROXY_ENABLED', 'True').lower() == 'true'
 
 
 class DevelopmentConfig(Config):
