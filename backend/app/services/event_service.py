@@ -140,7 +140,7 @@ class EventService:
         region = params.get('region', 'CN')
 
         curr_prog, curr_step = 0, 1
-        total_step = 6
+        total_step = 7
         prog_of_single_step = int(100. / total_step)
 
         # 阶段1: 从数据源搜索
@@ -192,6 +192,27 @@ class EventService:
         curr_prog += prog_of_single_step
         curr_step += 1
 
+        # 阶段7：使用LLM生成事件摘要
+        update_progress(curr_prog, 100, f'步骤{curr_step}/{total_step}: 正在生成事件摘要...')
+        ai_summary = None
+        try:
+            ai_summary = self._generate_event_summary_with_ai(
+                query,
+                articles_with_sentiment,
+                timeline_nodes,
+                update_progress,
+                curr_step,
+                total_step
+            )
+            if ai_summary:
+                logger.info(f"事件摘要生成成功，长度: {len(ai_summary)} 字符")
+            else:
+                logger.warning("事件摘要生成失败，将使用默认摘要")
+        except Exception as e:
+            logger.error(f"生成事件摘要异常: {str(e)}")
+        curr_prog += prog_of_single_step
+        curr_step += 1
+
         if curr_step == total_step:
             curr_prog = 100
         
@@ -202,6 +223,7 @@ class EventService:
             media_info_dict,
             timeline_nodes,
             segmentation_result,
+            ai_summary,
         )
         event['status'] = 'completed'
         event['progress'] = {
@@ -361,7 +383,8 @@ class EventService:
         articles: List[Dict],
         media_info_dict: Optional[Dict[str, Dict]] = None,
         timeline_nodes=None,
-        segmentation_result: Optional[Dict] = None
+        segmentation_result: Optional[Dict] = None,
+        ai_summary: Optional[str] = None
     ) -> Dict:
         """
         从文章列表创建事件
@@ -378,9 +401,11 @@ class EventService:
         # 生成事件ID
         event_id = self._generate_event_id(query)
         
-        # 提取摘要（取第一篇文章的摘要）
+        # 使用AI生成的摘要，如果没有则使用第一篇文章的摘要
         summary = ""
-        if articles:
+        if ai_summary:
+            summary = ai_summary
+        elif articles:
             summary = articles[0].get('summary', '')[:200]
         
         # 提取所有来源，并关联媒体信息
@@ -858,6 +883,146 @@ class EventService:
         timeline_generator = get_timeline_generator()
         timeline_nodes = timeline_generator.generate_timeline(task_id, articles)
         return timeline_nodes
+    
+    def _generate_event_summary_with_ai(
+        self,
+        query: str,
+        articles: List[Dict],
+        timeline_nodes: Optional[List[Dict]],
+        update_progress=None,
+        curr_step=None,
+        total_step=None
+    ) -> Optional[str]:
+        """
+        使用硅基流动 AI 生成事件摘要
+        
+        Args:
+            query: 搜索关键词
+            articles: 文章列表
+            timeline_nodes: 时间线节点列表
+            update_progress: 进度更新函数
+            curr_step: 当前步骤
+            total_step: 总步骤数
+            
+        Returns:
+            生成的摘要文本或None（如果生成失败）
+        """
+        # 检查是否配置了 API Key
+        if not Config.SILICONFLOW_API_KEY:
+            logger.warning("未配置 SILICONFLOW_API_KEY，跳过AI摘要生成")
+            return None
+        
+        if not articles:
+            logger.warning("文章列表为空，无法生成摘要")
+            return None
+        
+        try:
+            # 收集所有新闻标题和时间
+            titles_with_time = []
+            for article in articles[:20]:  # 限制最多20篇文章，避免prompt过长
+                title = article.get('title', '')
+                published_at = article.get('published_at', '')
+                if title:
+                    time_str = published_at if published_at else '时间未知'
+                    titles_with_time.append(f"- {title} ({time_str})")
+            
+            # 格式化时间线信息
+            timeline_text = ""
+            if timeline_nodes and len(timeline_nodes) > 0:
+                timeline_items = []
+                for node in timeline_nodes[:10]:  # 限制最多10个时间线节点
+                    timestamp = node.get('timestamp', '')
+                    key_event = node.get('key_event', '')
+                    summary = node.get('summary', '')
+                    # 优先使用key_event，如果没有则使用summary
+                    description = key_event if key_event else summary
+                    if timestamp and description:
+                        timeline_items.append(f"- {timestamp}: {description}")
+                if timeline_items:
+                    timeline_text = "\n时间线：\n" + "\n".join(timeline_items)
+            
+            # 构建 prompt
+            titles_text = "\n".join(titles_with_time)
+            prompt = f"""请根据以下新闻标题和时间线信息，生成一个关于"{query}"的事件摘要。
+
+要求：
+1. 摘要应该简洁明了，概括事件的核心内容
+2. 长度控制在200-300字之间
+3. 突出事件的关键信息和发展脉络
+4. 使用中文回答
+5. 直接输出摘要内容，不要包含"摘要："等前缀
+
+新闻标题列表：
+{titles_text}
+{timeline_text}
+
+请生成事件摘要："""
+            
+            # 调用硅基流动 API
+            headers = {
+                'Authorization': f'Bearer {Config.SILICONFLOW_API_KEY}',
+                'Content-Type': 'application/json'
+            }
+            
+            payload = {
+                'model': Config.SILICONFLOW_MODEL,
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': prompt
+                    }
+                ],
+                'temperature': 0.7,
+                'max_tokens': 500
+            }
+            
+            logger.info(f"正在生成事件摘要，查询词: {query}")
+            
+            # 更新进度
+            if update_progress and curr_step is not None and total_step is not None:
+                prog_of_single_step = 100. / total_step
+                curr_prog = int(prog_of_single_step * (curr_step - 1))
+                update_progress(
+                    curr_prog + int(prog_of_single_step * 0.5),
+                    100,
+                    f'步骤{curr_step}/{total_step}: 正在调用AI生成事件摘要...'
+                )
+            
+            response = requests.post(
+                Config.SILICONFLOW_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=300
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"API 请求失败: {response.status_code} - {response.text}")
+                return None
+            
+            result = response.json()
+            content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+            
+            if not content:
+                logger.error(f"API 返回内容为空")
+                return None
+            
+            # 清理摘要内容（去除可能的格式标记）
+            summary = content.strip()
+            # 移除可能的"摘要："等前缀
+            prefixes = ['摘要：', '摘要:', '摘要', '事件摘要：', '事件摘要:', '事件摘要']
+            for prefix in prefixes:
+                if summary.startswith(prefix):
+                    summary = summary[len(prefix):].strip()
+            
+            logger.info(f"事件摘要生成成功，长度: {len(summary)} 字符")
+            return summary
+            
+        except requests.exceptions.Timeout:
+            logger.error(f"生成事件摘要超时")
+            return None
+        except Exception as e:
+            logger.error(f"生成事件摘要失败: {str(e)}")
+            return None
 
 
 # 全局服务实例

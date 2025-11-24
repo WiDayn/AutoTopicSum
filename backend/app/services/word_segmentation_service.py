@@ -21,21 +21,22 @@ class WordSegmentationService:
         
         try:
             import hanlp
-            # 使用HanLP的多任务模型，支持分词和词性标注
-            # 使用轻量级模型以加快加载速度
-            self._hanlp = hanlp.load(hanlp.pretrained.mtl.CLOSE_TOK_POS_NER_SRL_DEP_SDP_CON_ELECTRA_SMALL_ZH)
+            # 优先加载支持 tok/fine + pos/pku + ner/pku 的多任务模型
+            self._hanlp = hanlp.load(
+                hanlp.pretrained.mtl.CLOSE_TOK_POS_NER_SRL_DEP_SDP_CON_ELECTRA_SMALL_ZH
+            )
             self._initialized = True
-            logger.info("HanLP模型加载成功（支持分词和词性标注）")
+            logger.info("HanLP 多任务模型加载成功（支持 PKU 词性与 NER）")
         except Exception as e:
-            logger.error(f"HanLP模型加载失败: {str(e)}")
-            # 如果多任务模型加载失败，尝试使用仅分词模型
+            logger.error(f"HanLP 多任务模型加载失败: {str(e)}")
+            # 如果多任务模型不可用，回退到轻量级分词模型
             try:
-                logger.info("尝试加载仅分词模型...")
+                logger.info("尝试加载轻量级分词模型 (COARSE_ELECTRA_SMALL_ZH)...")
                 self._hanlp = hanlp.load(hanlp.pretrained.tok.COARSE_ELECTRA_SMALL_ZH)
                 self._initialized = True
-                logger.info("HanLP分词模型加载成功（不支持词性标注）")
+                logger.info("HanLP 轻量级分词模型加载成功（仅提供分词能力）")
             except Exception as e2:
-                logger.error(f"分词模型加载也失败: {str(e2)}")
+                logger.error(f"轻量级分词模型加载也失败: {str(e2)}")
                 raise
     
     def segment(self, text: str) -> Dict[str, Any]:
@@ -66,77 +67,43 @@ class WordSegmentationService:
                     'message': 'HanLP模型未初始化'
                 }
             
-            # 执行分词和词性标注
-            # 尝试使用多任务模型（支持词性标注）
+            # 使用 PKU 标注体系
             try:
-                # 检查模型是否支持多任务
-                result = self._hanlp(text, tasks=['tok', 'pos'])
-                
-                logger.debug(f"HanLP返回结果类型: {type(result)}, 键: {result.keys() if isinstance(result, dict) else 'N/A'}")
-                
-                # 获取分词结果
-                tokens = result.get('tok', [])
-                if not tokens:
-                    # 如果tok为空，尝试直接获取
-                    tokens = result.get('tok/fine', [])
-                
-                # 获取词性标注结果
-                pos_tags = result.get('pos', [])
-                if not pos_tags:
-                    # 如果pos为空，尝试其他可能的键
-                    pos_tags = result.get('pos/pku', [])
-                    if not pos_tags:
-                        pos_tags = result.get('pos/ctb', [])
-                    if not pos_tags:
-                        # 尝试CTB格式
-                        pos_tags = result.get('pos/ctb/pku', [])
-                
-                # 确保tokens和pos_tags是列表格式
-                if not isinstance(tokens, list):
-                    tokens = list(tokens) if tokens else []
-                if not isinstance(pos_tags, list):
-                    pos_tags = list(pos_tags) if pos_tags else []
-                
-                logger.debug(f"分词结果: {tokens}, 词性结果: {pos_tags}")
-                
-                # 格式化结果（包含词性）
+                result = self._hanlp(
+                    text,
+                    tasks=['tok/fine', 'pos/pku', 'ner/pku']
+                )
+                logger.debug(
+                    "HanLP返回: type=%s keys=%s",
+                    type(result),
+                    list(result.keys()) if isinstance(result, dict) else 'N/A'
+                )
+                tokens = self._extract_list(result, ['tok/fine', 'tok', 'tok/coarse'])
+                pos_tags = self._extract_list(result, ['pos/pku', 'pos', 'pos/ctb'])
+                ner_entities = result.get('ner/pku', [])
                 segments = []
-                for i, token in enumerate(tokens):
-                    pos_tag = pos_tags[i] if i < len(pos_tags) else 'UNKNOWN'
-                    # 清理词性标签（去除可能的空格和特殊字符）
+                for idx, token in enumerate(tokens):
+                    pos_tag = pos_tags[idx] if idx < len(pos_tags) else None
                     if pos_tag and isinstance(pos_tag, str):
                         pos_tag = pos_tag.strip()
-                    pos_label = self._get_pos_label(pos_tag)
+                    pos_label = self._get_pos_label(pos_tag) if pos_tag else None
                     segments.append({
                         'word': token,
                         'pos': pos_tag,
                         'pos_label': pos_label,
                         'length': len(token)
                     })
-                    logger.debug(f"词: {token}, 词性: {pos_tag}, 标签: {pos_label}")
-                
-            except (KeyError, TypeError, AttributeError) as e:
-                # 如果多任务调用失败，尝试仅分词
-                logger.debug(f"多任务调用失败，尝试仅分词: {str(e)}")
-                try:
-                    tokens = self._hanlp(text)
-                    
-                    # 确保tokens是列表格式
-                    if not isinstance(tokens, list):
-                        tokens = list(tokens) if tokens else []
-                    
-                    # 格式化结果（不包含词性）
-                    segments = []
-                    for token in tokens:
-                        segments.append({
-                            'word': token,
-                            'pos': None,
-                            'pos_label': None,
-                            'length': len(token)
-                        })
-                except Exception as e2:
-                    logger.error(f"分词失败: {str(e2)}")
-                    raise
+                    logger.debug("词: %s, 词性: %s, 标签: %s", token, pos_tag, pos_label)
+            except Exception as e:
+                logger.warning(f"PKU 多任务调用失败，回退为仅分词模式: {str(e)}")
+                tokens = self._ensure_list(self._hanlp(text))
+                segments = [{
+                    'word': token,
+                    'pos': None,
+                    'pos_label': None,
+                    'length': len(token)
+                } for token in tokens]
+                ner_entities = []
             
             # 生成带词性的分词文本
             if segments and segments[0].get('pos'):
@@ -153,7 +120,8 @@ class WordSegmentationService:
                     'segments': segments,
                     'total_words': len(segments),
                     'segmented_text': ' / '.join([seg['word'] for seg in segments]),
-                    'segmented_text_with_pos': segmented_text_with_pos
+                    'segmented_text_with_pos': segmented_text_with_pos,
+                    'entities': self._format_entities(ner_entities)
                 },
                 'message': '分词成功'
             }
@@ -219,6 +187,57 @@ class WordSegmentationService:
                 'data': None,
                 'message': f'批量分词失败: {str(e)}'
             }
+    
+    def _extract_list(self, result: Any, keys: List[str]) -> List[Any]:
+        """按照候选键依次提取列表内容"""
+        if not isinstance(result, dict):
+            return []
+        for key in keys:
+            if key in result and result[key]:
+                return self._ensure_list(result[key])
+        return []
+    
+    def _ensure_list(self, value: Any) -> List[Any]:
+        """确保返回列表形式"""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, tuple):
+            return list(value)
+        return [value]
+    
+    def _format_entities(self, entities: Any) -> List[Dict[str, Any]]:
+        """将 HanLP 的 ner/pku 结果转换为统一结构"""
+        formatted = []
+        if not entities:
+            return formatted
+        for item in entities:
+            text = None
+            label = None
+            start = None
+            end = None
+            if isinstance(item, dict):
+                text = item.get('text') or item.get('word')
+                label = item.get('label') or item.get('type')
+                start = item.get('start')
+                end = item.get('end')
+            elif isinstance(item, (list, tuple)):
+                if len(item) == 2:
+                    text, label = item
+                elif len(item) >= 3:
+                    text = item[0]
+                    start = item[1]
+                    end = item[2]
+                    label = item[3] if len(item) > 3 else item[-1]
+            if text:
+                formatted.append({
+                    'text': text,
+                    'label': label,
+                    'start': start,
+                    'end': end
+                })
+        return formatted
     
     def _get_pos_label(self, pos_tag: str) -> str:
         """

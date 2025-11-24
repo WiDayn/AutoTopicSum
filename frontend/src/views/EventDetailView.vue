@@ -130,14 +130,6 @@
           <p class="text-muted-foreground leading-relaxed">{{ event.summary }}</p>
         </Card>
 
-        <!-- 详细内容 -->
-        <Card class="p-6">
-          <h2 class="text-xl font-semibold mb-3">详细内容</h2>
-          <p class="text-muted-foreground leading-relaxed whitespace-pre-line">
-            {{ event.content }}
-          </p>
-        </Card>
-
         <!-- 标签 -->
         <div v-if="event.tags && event.tags.length" class="flex gap-2 flex-wrap">
           <Badge v-for="tag in event.tags" :key="tag" variant="outline">
